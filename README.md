@@ -40,4 +40,8 @@ Right now we should not kick out users of rooms they are in,a s you mijght add u
 Open Questions:
 
 - How to create room? 
-- How to identify room: proposal: scopename_scopeid (team_3453456456)
+- How to identify room: proposal: scopename_scopeid (team_3453456456) als alias
+
+https://matrix.org/docs/spec/application_service/r0.1.2#identity-assertion
+
+Question: Can we use an as_token without fully installing an application service and trigger all those webhooks?
