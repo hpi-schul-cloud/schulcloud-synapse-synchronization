@@ -31,7 +31,13 @@ Logic:
 2. Sync
 
 - Check if user exits, if not create him
-- Get all managed rooms by this user (TODO: How to identify those).
+- Get all managed rooms by this user.
 - For all rooms where the user is not in: Check if room exists (if not create), add user to room. If user is in room update power level if requetsed power level is higher than current one.
 
 Right now we should not kick out users of rooms they are in,a s you mijght add users within the chat. We alse shoudl never lower the power user room level per sync.
+
+
+Open Questions:
+
+- How to create room? 
+- How to identify room: proposal: scopename_scopeid (team_3453456456)
