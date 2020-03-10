@@ -20,7 +20,7 @@ var testObj = {
             name: 'Kurs 2 (bidirektional)',
             type: 'course',
             announcements_only: false,
-            is_moderator: true 
+            is_moderator: false 
         },
     ]
 }
@@ -191,6 +191,43 @@ async function syncUserWithMatrix(payload){
         )
         if (room_state.events_default != desiredUserPower){
             room_state.events_default = desiredUserPower;
+            await matrix_admin_api.put('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels', room_state)
+            .then(function (response) {
+                console.log(response.data);
+            })
+            .catch(function (error) {
+                console.log(error);
+            }
+            )
+        }
+        // check moderator
+        await matrix_admin_api.get('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels').then(function (response) {
+            if (response.status == 200){
+                room_state = response.data;
+                console.log(response.data);
+            }
+        })
+        .catch(function (error) {
+            console.log(error);
+        }
+        )
+        if (room.is_moderator) {
+            if (!(room_state.users[user_id] && room_state.users[user_id] == 50)){
+                room_state.users[user_id] = 50;
+                await matrix_admin_api.put('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels', room_state)
+                .then(function (response) {
+                    console.log(response.data);
+                })
+                .catch(function (error) {
+                    console.log(error);
+                }
+                )
+            }else{
+                console.log("user is already a moderator");
+            }
+            //TODO: Delete moderator if valiue is false
+        }else if (room_state.users[user_id] && room_state.users[user_id] == 50){
+            delete room_state.users[user_id];
             await matrix_admin_api.put('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels', room_state)
             .then(function (response) {
                 console.log(response.data);
