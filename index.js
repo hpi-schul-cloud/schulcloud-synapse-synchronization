@@ -20,13 +20,13 @@ var testObj = {
 var amqp = require('amqplib/callback_api');
 var fs = require('fs');
 
-const MATRXI_BASE_URL = "https://matrix.stomt.com"; //without trailing slash
+const MATRIX_DOMAIN = "matrix.stomt.com"; //without trailing slash
 const axios = require('axios');
 // read token from file, should be moved to ENv or secrets for prod
 var admin_token = fs.readFileSync('token','utf8');
 
 const matrix_admin_api = axios.create({
-    baseURL: MATRXI_BASE_URL,
+    baseURL: "https://" + MATRIX_DOMAIN,
     timeout: 10000,
     headers: {'Authorization': 'Bearer '+ admin_token}
   });
@@ -111,8 +111,10 @@ async function syncUserWithMatrix(payload){
         let room_already_present = false;
         // check if exists and permissions levels are what we want
         // GET /_matrix/client/r0/directory/room/{roomAlias}
+        console.log("check room " + alias);
         await matrix_admin_api.get('/_matrix/client/r0/directory/room/' + alias)
         .then(function (response) {
+            console.log(response);
             if (response.status == 200){
                 room_already_present = true;
                 console.log("room " + alias + " found");
@@ -122,32 +124,49 @@ async function syncUserWithMatrix(payload){
             console.log("room " + alias + " not found");
         })
         //create room
-        await matrix_admin_api.post('/_matrix/client/r0/createRoom', {
-            "preset": "private_chat",
-            "room_alias_name": alias,
-            "name": room.name,
-            "topic": "",
-            "creation_content": {
-            }
+        if (room_already_present == false){
+            await matrix_admin_api.post('/_matrix/client/r0/createRoom', {
+                "preset": "private_chat", // this allows guest, we might want to disallow this later
+                "room_alias_name": alias,
+                "name": room.name,
+                "topic": "",
+                "creation_content": {
+                }
+            })
+            .then(function (response) {
+                if (response.status == 200){
+                    room_already_present = true;
+                    console.log("room " + alias + " created");
+                }
+            })
+            .catch(function (error) {
+                console.log("room " + alias + " not found");
+              }
+            )
+        }
+
+        //join user
+        var fq_alias = "!" + alias + ":" + MATRIX_DOMAIN;
+        fq_alias = "!" + alias + ":" + MATRIX_DOMAIN;
+        await matrix_admin_api.post('/_synapse/admin/v1/join/' + fq_alias, {
+            user_id: user_id
         })
         .then(function (response) {
+            console.log(response);
             if (response.status == 200){
-                room_already_present = true;
-                console.log("room " + alias + " created");
+                console.log("user " + alias + " joined " + fq_alias);
             }
         })
         .catch(function (error) {
-            console.log("room " + alias + " not found");
+            console.log(error);
           }
         )
+
+        // check if exists and permissions levels are what we want
     });
-
   }
+    
 
-    // check if exists and permissions levels are what we want
-
-
-    // POST /_matrix/client/r0/createRoom
     // else if permission_not-up2date
     // update room settings
     // maybe add cache here later
