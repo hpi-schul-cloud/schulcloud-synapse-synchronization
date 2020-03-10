@@ -10,10 +10,17 @@ var testObj = {
     rooms:[
         {
             id: '12345ssss6s61ddd2dd212',
-            name: 'TESTPERM',
+            name: 'Accouncement Test',
             type: 'course',
             announcements_only: true,
-            is_moderator: true //must be mapped https://matrix.org/docs/guides/moderation#power-levels
+            is_moderator: true 
+        },
+        {
+            id: 'sdgdfsgsdfg',
+            name: 'Kurs 2 (bidirektional)',
+            type: 'course',
+            announcements_only: false,
+            is_moderator: true 
         },
     ]
 }
@@ -31,7 +38,7 @@ const matrix_admin_api = axios.create({
     timeout: 10000,
     headers: {'Authorization': 'Bearer '+ admin_token}
   });
-// --header "Authorization: Bearer <access_token>"
+
 // this can be localhost, in production we can take care of 
 // forwarding the ports to all containers
 // amqp.connect('amqp://localhost', function(error0, connection) {
@@ -126,6 +133,7 @@ async function syncUserWithMatrix(payload){
         .catch(function (error) {
             console.log("room " + alias + " not found");
         })
+        // TODO: Update room title if needed
         //create room
         if (room_already_present == false){
             await matrix_admin_api.post('/_matrix/client/r0/createRoom', {
@@ -167,6 +175,9 @@ async function syncUserWithMatrix(payload){
 
         // check if exists and permissions levels are what we want
         var desiredUserPower = 0;
+        if (room.announcements_only == true){
+            desiredUserPower = 50;
+        }
         var room_state = {};
         await matrix_admin_api.get('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels').then(function (response) {
             if (response.status == 200){
@@ -178,15 +189,17 @@ async function syncUserWithMatrix(payload){
             console.log(error);
           }
         )
-        room_state.events_default = desiredUserPower;
-        await matrix_admin_api.put('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels', room_state)
-        .then(function (response) {
-            console.log(response.data);
-        })
-        .catch(function (error) {
-            console.log(error);
-          }
-        )
+        if (room_state.events_default != desiredUserPower){
+            room_state.events_default = desiredUserPower;
+            await matrix_admin_api.put('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels', room_state)
+            .then(function (response) {
+                console.log(response.data);
+            })
+            .catch(function (error) {
+                console.log(error);
+            }
+            )
+        }
     });
   }
 
