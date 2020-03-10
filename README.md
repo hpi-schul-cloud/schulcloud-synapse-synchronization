@@ -15,8 +15,11 @@ Logic:
 
 ```
 { 
-    school_id: 1223435,
-    school_has_allhands_channel: true,
+    school:{
+      id: 1223435,
+      has_allhands_channel : true,
+      name: "Peanuts High"
+    },
     user: {
         id: 1234566@matrix.schul-cloud.org,
         name: "Joe Cool"",

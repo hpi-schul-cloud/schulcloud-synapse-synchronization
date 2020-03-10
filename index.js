@@ -1,10 +1,13 @@
 
 var testObj = {
-    school_id: 1223435,
-    school_has_allhands_channel : true,
+    school:{
+     id: 1223435,
+     has_allhands_channel : true,
+     name: "Peanuts High"
+    },
      user: {
-      id: "@s12345660002:matrix.stomt.com",//numeric is not allowed
-      name: "Joe Cool",
+      id: "@s12345660002cat:matrix.stomt.com",//numeric is not allowed
+      name: "Joe Cools Katze",
       is_school_admin: true
     },
     rooms:[
@@ -16,8 +19,8 @@ var testObj = {
             is_moderator: true 
         },
         {
-            id: 'sdgdfsgsdfg',
-            name: 'Kurs 2 (bidirektional)',
+            id: 'sdgdfsgeeffewsdfg',
+            name: 'Kurs 5 (bidirektional)',
             type: 'course',
             announcements_only: false,
             is_moderator: false 
@@ -89,11 +92,10 @@ async function syncUserWithMatrix(payload){
     })
     .catch(function (error) {
         // handle error
-        console.log("user not there");
+        console.log("user not there yet");
     }
   );
   // PUT /_synapse/admin/v2/users/<user_id>
-  console.log(user_already_present);
   if (user_already_present == false){
     console.log("create user");
     await matrix_admin_api.put('/_synapse/admin/v2/users/' + user_id, {
@@ -140,7 +142,7 @@ async function syncUserWithMatrix(payload){
                 "preset": "private_chat", // this allows guest, we might want to disallow this later
                 "room_alias_name": alias,
                 "name": room.name,
-                "topic": "",
+                "topic": "Kanal für " + room.name + " (" + payload.school.name + ")",
                 "creation_content": {
                 }
             })
@@ -159,7 +161,6 @@ async function syncUserWithMatrix(payload){
 
         //join user
        // note that we need to encode the #
-        
         // await matrix_admin_api.post('/_synapse/admin/v1/join/' + fq_alias, {
         //     user_id: user_id
         // })
@@ -243,7 +244,7 @@ async function syncUserWithMatrix(payload){
 
 
     // always join user (previous check can be implemented later)
-    // if (payload.school_has_allhands_channel) {
+    if (payload.school_has_allhands_channel) {
     //     let alias = "all_users_"+ school_id;
     //     let room_name = "Schulhof"
     //     // check if exists
@@ -255,7 +256,7 @@ async function syncUserWithMatrix(payload){
     //     // always join user (previous check can be implemented later)
     //     // requires https://github.com/matrix-org/synapse/pull/7051
     //     // POST /_synapse/admin/v1/join/<roomIdOrAlias></roomIdOrAlias>
-    // }
+     }
 };
 
 syncUserWithMatrix(testObj);
