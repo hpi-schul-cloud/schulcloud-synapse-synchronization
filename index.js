@@ -6,7 +6,7 @@ var testObj = {
      name: "Peanuts High"
     },
      user: {
-      id: "@s12345660002cat:matrix.stomt.com",//numeric is not allowed
+      id: "@user:matrix.stomt.com",//numeric is not allowed
       name: "Joe Cools Katze",
       is_school_admin: true
     },
@@ -263,7 +263,7 @@ async function setModerator(room_matrix_id, user_id, is_moderator){
         delete room_state.users[user_id];
         await matrix_admin_api.put('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels', room_state)
         .then(function (response) {
-            // console.log(response.data);
+            console.log(response.data);
         })
         .catch(function (error) {
             console.log(error);
