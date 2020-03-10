@@ -19,7 +19,19 @@
 // }
 
 var amqp = require('amqplib/callback_api');
+var fs = require('fs');
 
+const MATRXI_BASE_URL = "https://matrix.stomt.com"; //without trailing slash
+const axios = require('axios');
+// read token from file, should be moved to ENv or secrets for prod
+var admin_token = fs.readFileSync('token','utf8');
+
+const matrix_admin_api = axios.create({
+    baseURL: MATRXI_BASE_URL,
+    timeout: 10000,
+    headers: {'Authorization': 'Bearer '+ admin_token}
+  });
+// --header "Authorization: Bearer <access_token>"
 // this can be localhost, in production we can take care of 
 // forwarding the ports to all containers
 amqp.connect('amqp://localhost', function(error0, connection) {
@@ -46,15 +58,47 @@ amqp.connect('amqp://localhost', function(error0, connection) {
     });
   });
 });
+//dev and test stuff
 
 function syncUserWithMatrix(payload){
 
   let default_room_params = {};
-
+  let user_id = payload.user.id;
+  let user_already_present = false;
   // check if user exists
   // GET /_synapse/admin/v2/users/<user_id>
-  // if not create
+  matrix_admin_api.get('/_synapse/admin/v2/users/'+user_id)
+    .then(function (response) {
+        if (response.status == 200){
+            user_already_present = true;
+        }
+        //do we need something from the user?
+    })
+    .catch(function (error) {
+        // handle error
+        console.log(error);
+    }
+    // .finally(function () {
+    //     // always executed
+    // }
+  );
+
   // PUT /_synapse/admin/v2/users/<user_id>
+  if (user_already_present === false){
+    matrix_admin_api.put('/_synapse/admin/v2/users/'+user_id, {
+            "password": Math.random().toString(36), // we will never use this, password login should be disabled
+            "displayname": payload.user.name,
+            "admin": false,
+            "deactivated": false
+      })
+    .then(function (response) {
+        console.log(response);
+        if (response.status == 200){
+            user_already_present = true;
+        }
+        //do we need something from the user?
+    })
+  }
     //   {
     //     "password": "", // random if its ever used
     //     "displayname": "User",
