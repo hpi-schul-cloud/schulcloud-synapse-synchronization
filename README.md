@@ -26,7 +26,7 @@ Logic:
         {
             id: 1234566,
             name: 'Mathe 6b',
-            user_level: 10
+            permission: read
         },
         ...
     ]
