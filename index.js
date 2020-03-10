@@ -143,63 +143,25 @@ async function syncUserWithMatrix(payload){
         }
         // this can run async
         setRoomEventsDefault(room_matrix_id, desiredUserPower);
+        setModerator(room_matrix_id, payload.user.id, room.is_moderator);
 
-
-        // check moderator
-        await matrix_admin_api.get('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels').then(function (response) {
-            if (response.status == 200){
-                room_state = response.data;
-                console.log(response.data);
-            }
-        })
-        .catch(function (error) {
-            console.log(error);
-        }
-        )
-        if (room.is_moderator) {
-            if (!(room_state.users[user_id] && room_state.users[user_id] == 50)){
-                room_state.users[user_id] = 50;
-                await matrix_admin_api.put('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels', room_state)
-                .then(function (response) {
-                    console.log(response.data);
-                })
-                .catch(function (error) {
-                    console.log(error);
-                }
-                )
-            }else{
-                console.log("user is already a moderator");
-            }
-            //TODO: Delete moderator if valiue is false
-        }else if (room_state.users[user_id] && room_state.users[user_id] == 50){
-            delete room_state.users[user_id];
-            await matrix_admin_api.put('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels', room_state)
-            .then(function (response) {
-                console.log(response.data);
-            })
-            .catch(function (error) {
-                console.log(error);
-            }
-            )
-        }
     });
   }
-
-
 
     // always join user (previous check can be implemented later)
     if (payload.school_has_allhands_channel) {
     //     let alias = "all_users_"+ school_id;
-    //     let room_name = "Schulhof"
-    //     // check if exists
-    //     // GET /_matrix/client/r0/directory/room/{roomAlias}
-    //     // throws 404 if not exists
-    //     // add if not exists
-    //     // POST /_matrix/client/r0/createRoom
-    //     // maybe add cache here later
-    //     // always join user (previous check can be implemented later)
-    //     // requires https://github.com/matrix-org/synapse/pull/7051
-    //     // POST /_synapse/admin/v1/join/<roomIdOrAlias></roomIdOrAlias>
+        let room_name = "Ankündigungen";
+        let topic = "Ankündigungen der " + payload.school.name;
+        let alias =  + "news_" + payload.school.id;
+        var fq_alias = "%23" + alias + ":" + MATRIX_DOMAIN;
+        var room_matrix_id = await createRoom(fq_alias, alias, room_name, school_name, topic);
+        setRoomEventsDefault(room_matrix_id, 50);
+        if (payload.user.is_school_admin) {
+            setModerator(room_matrix_id, payload.user.id, true);
+        }
+     }else{
+         //TODO: delete or block room if setting is changed
      }
 };
 
@@ -209,7 +171,7 @@ async function setRoomEventsDefault(room_matrix_id, events_default){
     await matrix_admin_api.get('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels').then(function (response) {
         if (response.status == 200){
             room_state = response.data;
-            console.log(response.data);
+            // console.log(response.data);
         }
     })
     .catch(function (error) {
@@ -220,7 +182,7 @@ async function setRoomEventsDefault(room_matrix_id, events_default){
         room_state.events_default = events_default;
         await matrix_admin_api.put('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels', room_state)
         .then(function (response) {
-            console.log(response.data);
+            // console.log(response.data);
         })
         .catch(function (error) {
             console.log(error);
@@ -230,8 +192,7 @@ async function setRoomEventsDefault(room_matrix_id, events_default){
 }
 
 // returns room_matrix_id
-
-async function createRoom(fq_alias, alias, room_name, school_name){
+async function createRoom(fq_alias, alias, room_name, school_name, topic = null){
     let room_already_present = false;
     console.log("check room " + fq_alias);
         await matrix_admin_api.get('/_matrix/client/r0/directory/room/' + fq_alias)
@@ -252,7 +213,7 @@ async function createRoom(fq_alias, alias, room_name, school_name){
                 "preset": "private_chat", // this allows guest, we might want to disallow this later
                 "room_alias_name": alias,
                 "name": room_name,
-                "topic": "Kanal für " + room_name + " (" + school_name + ")",
+                "topic": topic? topic : "Kanal für " + room_name + " (" + school_name + ")",
                 "creation_content": {
                 }
             })
@@ -270,4 +231,46 @@ async function createRoom(fq_alias, alias, room_name, school_name){
         }
         return room_matrix_id;
 }
+
+async function setModerator(room_matrix_id, user_id, is_moderator){
+    // check moderator
+    await matrix_admin_api.get('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels').then(function (response) {
+        if (response.status == 200){
+            room_state = response.data;
+            // console.log(response.data);
+        }
+    })
+    .catch(function (error) {
+        console.log(error);
+    }
+    )
+    if (is_moderator) {
+        if (!(room_state.users[user_id] && room_state.users[user_id] == 50)){
+            room_state.users[user_id] = 50;
+            await matrix_admin_api.put('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels', room_state)
+            .then(function (response) {
+                console.log(response.data);
+            })
+            .catch(function (error) {
+                console.log(error);
+            }
+            )
+        }else{
+            console.log("user is already a moderator");
+        }
+        //TODO: Delete moderator if valiue is false
+    }else if (room_state.users[user_id] && room_state.users[user_id] == 50){
+        delete room_state.users[user_id];
+        await matrix_admin_api.put('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels', room_state)
+        .then(function (response) {
+            // console.log(response.data);
+        })
+        .catch(function (error) {
+            console.log(error);
+        }
+        )
+    }
+}
+
+// run for dev testing
 syncUserWithMatrix(testObj);
