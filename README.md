@@ -16,7 +16,12 @@ Logic:
 ```
 { 
     school_id: 1223435,
-    user_id: 1234566@matrix.schul-cloud.org, 
+    school_has_allhands_channel: true,
+    user: {
+        id: 1234566@matrix.schul-cloud.org,
+        name: "Joe Cool"",
+        is_school_admin: true
+    },
     rooms:[
         {
             id: 1234566,
@@ -44,4 +49,4 @@ Open Questions:
 
 https://matrix.org/docs/spec/application_service/r0.1.2#identity-assertion
 
-Question: Can we use an as_token without fully installing an application service and trigger all those webhooks?
+https://github.com/matrix-org/synapse/pull/7051
