@@ -26,7 +26,7 @@ Logic:
         {
             id: 1234566,
             name: 'Mathe 6b',
-            permission: read
+            is_moderator: false
         },
         ...
     ]
@@ -44,9 +44,8 @@ Right now we should not kick out users of rooms they are in,a s you mijght add u
 
 Open Questions:
 
-- How to create room? 
-- How to identify room: proposal: scopename_scopeid (team_3453456456) als alias
-
 https://matrix.org/docs/spec/application_service/r0.1.2#identity-assertion
 
 https://github.com/matrix-org/synapse/pull/7051
+
+TODO: Bidirectionalitaet: Standard User power level 0, then change room setting s to determine if those user sare allowed to write

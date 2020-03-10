@@ -12,7 +12,7 @@
 //             id: 1234566,
 //             name: 'Mathe 6b',
 //             type: 'course',
-//             permission: read //must be mapped https://matrix.org/docs/guides/moderation#power-levels
+//             is_moderator: true //must be mapped https://matrix.org/docs/guides/moderation#power-levels
 //         },
 //         ...
 //     ]
@@ -65,11 +65,13 @@ function syncUserWithMatrix(payload){
     // build id 
     // build alis
     let alias = room.type + "_"+ room.id;
-    // check if exists 
+    // check if exists and permissions levels are what we wanr
     // GET /_matrix/client/r0/directory/room/{roomAlias}
     // throws 404 if not exists
     // add if not exists
     // POST /_matrix/client/r0/createRoom
+    // else if permission_not-up2date
+    // update room settings
     // maybe add cache here later
     // always join user (previous check can be implemented later)
     // requires https://github.com/matrix-org/synapse/pull/7051
