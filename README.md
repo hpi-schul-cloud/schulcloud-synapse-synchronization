@@ -26,7 +26,9 @@ Logic:
         {
             id: 1234566,
             name: 'Mathe 6b',
-            is_moderator: false
+            type: 'course',
+            is_moderator: false,
+            announcements_only: true
         },
         ...
     ]

@@ -3,15 +3,16 @@ var testObj = {
     school_id: 1223435,
     school_has_allhands_channel : true,
      user: {
-      id: "@s12345660001:matrix.stomt.com",//numeric is not allowed
+      id: "@s12345660002:matrix.stomt.com",//numeric is not allowed
       name: "Joe Cool",
       is_school_admin: true
     },
     rooms:[
         {
-            id: '1234566',
-            name: 'Mathe 6b',
+            id: '12345ssss6s61ddd2dd212',
+            name: 'TESTPERM',
             type: 'course',
+            announcements_only: true,
             is_moderator: true //must be mapped https://matrix.org/docs/guides/moderation#power-levels
         },
     ]
@@ -108,16 +109,18 @@ async function syncUserWithMatrix(payload){
   if (payload.rooms){
     asyncForEach(payload.rooms, async (room) => {
         let alias = room.type + "_" + room.id;
+        var fq_alias = "%23" + alias + ":" + MATRIX_DOMAIN;
+        let room_matrix_id = null;
         let room_already_present = false;
         // check if exists and permissions levels are what we want
         // GET /_matrix/client/r0/directory/room/{roomAlias}
         console.log("check room " + alias);
-        await matrix_admin_api.get('/_matrix/client/r0/directory/room/' + alias)
+        await matrix_admin_api.get('/_matrix/client/r0/directory/room/' + fq_alias)
         .then(function (response) {
-            console.log(response);
             if (response.status == 200){
                 room_already_present = true;
-                console.log("room " + alias + " found");
+                room_matrix_id = response.data.room_id;
+                console.log("room " + room_matrix_id + " found");
             }
         })
         .catch(function (error) {
@@ -136,7 +139,8 @@ async function syncUserWithMatrix(payload){
             .then(function (response) {
                 if (response.status == 200){
                     room_already_present = true;
-                    console.log("room " + alias + " created");
+                    room_matrix_id = response.data.room_id;
+                    console.log("room " + room_matrix_id + " created");
                 }
             })
             .catch(function (error) {
@@ -146,33 +150,49 @@ async function syncUserWithMatrix(payload){
         }
 
         //join user
-        var fq_alias = "!" + alias + ":" + MATRIX_DOMAIN;
-        fq_alias = "!" + alias + ":" + MATRIX_DOMAIN;
-        await matrix_admin_api.post('/_synapse/admin/v1/join/' + fq_alias, {
-            user_id: user_id
-        })
-        .then(function (response) {
-            console.log(response);
+       // note that we need to encode the #
+        
+        // await matrix_admin_api.post('/_synapse/admin/v1/join/' + fq_alias, {
+        //     user_id: user_id
+        // })
+        // .then(function (response) {
+        //     if (response.status == 200){
+        //         console.log("user " + alias + " joined " + fq_alias);
+        //     }
+        // })
+        // .catch(function (error) {
+        //     console.log(error);
+        //   }
+        // )
+
+        // check if exists and permissions levels are what we want
+        var desiredUserPower = 0;
+        var room_state = {};
+        await matrix_admin_api.get('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels').then(function (response) {
             if (response.status == 200){
-                console.log("user " + alias + " joined " + fq_alias);
+                room_state = response.data;
+                console.log(response.data);
             }
         })
         .catch(function (error) {
             console.log(error);
           }
         )
-
-        // check if exists and permissions levels are what we want
+        room_state.events_default = desiredUserPower;
+        await matrix_admin_api.put('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels', room_state)
+        .then(function (response) {
+            console.log(response.data);
+        })
+        .catch(function (error) {
+            console.log(error);
+          }
+        )
     });
   }
-    
 
-    // else if permission_not-up2date
-    // update room settings
-    // maybe add cache here later
+
+
     // always join user (previous check can be implemented later)
-    // requires https://github.com/matrix-org/synapse/pull/7051
-    // POST /_synapse/admin/v1/join/<roomIdOrAlias></roomIdOrAlias>
     // if (payload.school_has_allhands_channel) {
     //     let alias = "all_users_"+ school_id;
     //     let room_name = "Schulhof"
