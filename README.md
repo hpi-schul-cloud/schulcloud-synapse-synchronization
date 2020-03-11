@@ -55,4 +55,4 @@ https://github.com/matrix-org/synapse/pull/7051
 
 todo; notfalls invite erst aus, dann hinzufügen , dann invite olny an
 
-TODO: Globale Lehrerzimmer
+TODO: Globale Lehrerzimmer: How to ensure invites are not resent to often -> move to dedicated function?

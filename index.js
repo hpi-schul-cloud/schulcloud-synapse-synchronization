@@ -1,5 +1,6 @@
 const MATRIX_DOMAIN = "matrix.stomt.com"; //without trailing slash
 const MATRIX_HOME_DOMAIN = "matrix.schul-cloud.org"; //global rooms go here
+const RABBIT_MQ = 'amqp://localhost';//this can be localhost, in production we can take care of forwarding the ports to all containers
 
 var testObj = {
     school:{
@@ -45,32 +46,31 @@ const matrix_admin_api = axios.create({
     headers: {'Authorization': 'Bearer '+ admin_token}
   });
 
-// this can be localhost, in production we can take care of 
-// forwarding the ports to all containers
-// amqp.connect('amqp://localhost', function(error0, connection) {
-//   if (error0) {
-//     throw error0;
-//   }
-//   connection.createChannel(function(error1, channel) {
-//     if (error1) {
-//       throw error1;
-//     }
-//     var queue = 'matrix_sync_populated';
 
-//     channel.assertQueue(queue, {
-//       durable: false
-//     });
+amqp.connect(RABBIT_MQ, function(error0, connection) {
+  if (error0) {
+    throw error0;
+  }
+  connection.createChannel(function(error1, channel) {
+    if (error1) {
+      throw error1;
+    }
+    var queue = 'matrix_sync_populated';
 
-//     console.log(" [*] Waiting for messages in %s.", queue);
+    channel.assertQueue(queue, {
+      durable: false
+    });
 
-//     channel.consume(queue, function(msg) {
-//         console.log(" [x] Received %s", msg.content.toString());
-//         this.syncUserWithMatrix(msg.content);
-//     }, {
-//         noAck: true
-//     });
-//   });
-// });
+    console.log(" [*] Waiting for messages in %s.", queue);
+
+    channel.consume(queue, function(msg) {
+        console.log(" [x] Received %s", msg.content.toString());
+        this.syncUserWithMatrix(msg.content);
+    }, {
+        noAck: true
+    });
+  });
+});
 
 async function asyncForEach(array, callback) {
     for (let index = 0; index < array.length; index++) {
