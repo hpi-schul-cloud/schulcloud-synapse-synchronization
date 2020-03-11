@@ -1,7 +1,9 @@
-const MATRIX_DOMAIN = "matrix.stomt.com"; //without trailing slash
-const MATRIX_HOME_DOMAIN = "matrix.schul-cloud.org"; //global rooms go here
-const RABBIT_MQ = 'amqp://localhost';//this can be localhost, in production we can take care of forwarding the ports to all containers
-const RABBIT_MQ_QUEUE: 'matrix_sync_populated';
+const { Configuration } = require('@schul-cloud/commons');
+
+const MATRIX_DOMAIN = Configuration.get("MATRIX_DOMAIN");
+const MATRIX_HOME_DOMAIN = Configuration.get("MATRIX_HOME_DOMAIN");
+const RABBIT_MQ = Configuration.get("RABBIT_MQ");
+const RABBIT_MQ_QUEUE = Configuration.get("RABBIT_MQ_QUEUE");
 
 var testObj = {
     school:{

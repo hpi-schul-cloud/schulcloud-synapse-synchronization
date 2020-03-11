@@ -1,0 +1,28 @@
+{
+	"title": "Matrix SC Syncer Configuration",
+	"type": "object",
+	"properties": {
+		"MATRIX_DOMAIN": {
+			"type": "string",
+			"default": "matrix.schul-cloud.org",
+			"description": "The domain where we find our specific matrix server"
+        },
+        "MATRIX_HOME_DOMAIN": {
+			"type": "string",
+			"default": "matrix.schul-cloud.org",
+			"description": "TThe domain where we find our specific matrix server for global rooms"
+        },
+        "RABBIT_MQ": {
+            "type": "string",
+            "format": "uri",
+            "pattern":".*(?<!/)$",
+			"default": "amqp://localhost",
+			"description": "The FQ-URI to our RabbitMq / amqp Server"
+        },
+        "RABBIT_MQ_QUEUE": {
+			"type": "string",
+			"default": "matrix_sync_populated",
+			"description": "The name of the rabbit mq channel we listen to"
+        }
+    }
+}
