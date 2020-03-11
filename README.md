@@ -23,7 +23,8 @@ Logic:
     user: {
         id: 1234566@matrix.schul-cloud.org,
         name: "Joe Cool"",
-        is_school_admin: true
+        is_school_admin: true,
+        tags: ["Mathe", "Sport"]
     },
     rooms:[
         {
@@ -53,3 +54,5 @@ Open Questions:
 https://github.com/matrix-org/synapse/pull/7051
 
 todo; notfalls invite erst aus, dann hinzufügen , dann invite olny an
+
+TODO: Globale Lehrerzimmer

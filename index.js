@@ -1,3 +1,5 @@
+const MATRIX_DOMAIN = "matrix.stomt.com"; //without trailing slash
+const MATRIX_HOME_DOMAIN = "matrix.schul-cloud.org"; //global rooms go here
 
 var testObj = {
     school:{
@@ -8,7 +10,8 @@ var testObj = {
      user: {
       id: "@user:matrix.stomt.com",//numeric is not allowed
       name: "Joe Cools Katze",
-      is_school_admin: true
+      is_school_admin: true,
+      tags: ["Mathe", "Sport"] // could be used for global lehrerzimmer
     },
     rooms:[
         {
