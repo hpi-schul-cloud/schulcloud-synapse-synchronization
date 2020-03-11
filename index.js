@@ -1,6 +1,7 @@
 const MATRIX_DOMAIN = "matrix.stomt.com"; //without trailing slash
 const MATRIX_HOME_DOMAIN = "matrix.schul-cloud.org"; //global rooms go here
 const RABBIT_MQ = 'amqp://localhost';//this can be localhost, in production we can take care of forwarding the ports to all containers
+const RABBIT_MQ_QUEUE: 'matrix_sync_populated';
 
 var testObj = {
     school:{
@@ -12,7 +13,7 @@ var testObj = {
       id: "@user:matrix.stomt.com",//numeric is not allowed
       name: "Joe Cools Katze",
       is_school_admin: true,
-      tags: ["Mathe", "Sport"] // could be used for global lehrerzimmer
+      tags: ["Mathe", "Sport"] // could be used for global room invites
     },
     rooms:[
         {
@@ -35,7 +36,6 @@ var testObj = {
 var amqp = require('amqplib/callback_api');
 var fs = require('fs');
 
-const MATRIX_DOMAIN = "matrix.stomt.com"; //without trailing slash
 const axios = require('axios');
 // read token from file, should be moved to ENv or secrets for prod
 var admin_token = fs.readFileSync('token','utf8');
@@ -55,7 +55,7 @@ amqp.connect(RABBIT_MQ, function(error0, connection) {
     if (error1) {
       throw error1;
     }
-    var queue = 'matrix_sync_populated';
+    var queue = RABBIT_MQ_QUEUE;
 
     channel.assertQueue(queue, {
       durable: false
