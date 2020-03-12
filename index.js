@@ -126,7 +126,7 @@ async function syncUserWithMatrix(payload){
         var fq_alias = "%23" + alias + ":" + MATRIX_DOMAIN;
         let room_matrix_id = await createRoom(fq_alias, alias, room.name, payload.school.name);
 
-        await joinUserToRoom(user_id, fq_alias);
+        await joinUserToRoom(user_id, room_matrix_id);
         // check if exists and permissions levels are what we want
         var desiredUserPower = 50;
         if (room.bidirectional == true){
@@ -183,28 +183,28 @@ async function setRoomEventsDefault(room_matrix_id, events_default){
     }
 }
 
-async function joinUserToRoom(user_id, fq_alias){        
+async function joinUserToRoom(user_id, room_id){        
     // join user
     // note that we need to encode the #
     //POST /_matrix/client/r0/rooms/{roomId}/invite
-     await matrix_admin_api.post('/_matrix/client/r0/directory/room/' + fq_alias + '/invite', {
+     await matrix_admin_api.post('/_matrix/client/r0/rooms/' + room_id + '/invite', {
          user_id: user_id
      })
      .then(function (response) {
          if (response.status == 200){
-             console.log("user " + alias + " invited " + fq_alias);
+             console.log("user " + user_id + " invited " + room_id);
          }
      })
      .catch(function (error) {
          console.log(error);
        }
      )
-     await matrix_admin_api.post('/_synapse/admin/v1/join/' + fq_alias, {
+     await matrix_admin_api.post('/_synapse/admin/v1/join/' + room_id, {
          user_id: user_id
      })
      .then(function (response) {
          if (response.status == 200){
-             console.log("user " + alias + " joined " + fq_alias);
+             console.log("user " + user_id + " joined " + room_id);
          }
      })
      .catch(function (error) {
