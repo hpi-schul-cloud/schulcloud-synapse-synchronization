@@ -302,7 +302,7 @@ async function getRoomState(room_matrix_id){
     return data;
 }
 
-async function setRoomState(room_matrix_id, state){
+async function setRoomState(room_matrix_id, room_state){
     await matrix_admin_api.put('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels', room_state)
     .then(function (response) {
         console.log("set mod right for " + user_id + " in " + room_matrix_id );
