@@ -24,6 +24,7 @@ Logic:
         id: 1234566@matrix.schul-cloud.org,
         name: "Joe Cool"",
         is_school_admin: true,
+        is_teacher: true,
         tags: ["Mathe", "Sport"]
     },
     rooms:[

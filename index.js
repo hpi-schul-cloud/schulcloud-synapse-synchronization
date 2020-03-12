@@ -15,6 +15,7 @@ var testObj = {
       id: "@user:matrix.stomt.com",//numeric is not allowed
       name: "Joe Cools Katze",
       is_school_admin: false,
+      is_teacher: true,
       tags: ["Mathe", "Sport"] // could be used for global room invites
     },
     rooms:[
@@ -144,7 +145,7 @@ async function syncUserWithMatrix(payload){
         console.log("$$$$$$$All Hands");
         let room_name = "Ankündigungen";
         let topic = "Ankündigungen der " + payload.school.name;
-        let alias =  + "news_" + payload.school.id;
+        let alias = "news_" + payload.school.id;
         var fq_alias = "%23" + alias + ":" + MATRIX_DOMAIN;
         var room_matrix_id = await createRoom(fq_alias, alias, room_name, payload.school.name, topic);
         setRoomEventsDefault(room_matrix_id, 50);
@@ -154,6 +155,21 @@ async function syncUserWithMatrix(payload){
         }
      }else{
         //TODO: delete or block room if setting is changed
+     }
+
+     //lehrerzimmer
+     if (payload.user.is_teacher == true) {
+        console.log("Lehrerzimmer ");
+        let room_name = "Lehrerzimmer";
+        let topic = "Lehrerzimmer der " + payload.school.name;
+        let alias = "teachers_" + payload.school.id;
+        var fq_alias = "%23" + alias + ":" + MATRIX_DOMAIN;
+        var room_matrix_id = await createRoom(fq_alias, alias, room_name, payload.school.name, topic);
+        // setRoomEventsDefault(room_matrix_id, 50);
+        await joinUserToRoom(user_id, room_matrix_id);
+        if (payload.user.is_school_admin) {
+            setModerator(room_matrix_id, payload.user.id, true);
+        }
      }
 };
 
@@ -295,4 +311,4 @@ async function setModerator(room_matrix_id, user_id, is_moderator){
 }
 
 // run for dev testing
-// syncUserWithMatrix(testObj);
+syncUserWithMatrix(testObj);
