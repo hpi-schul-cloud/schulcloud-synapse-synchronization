@@ -22,14 +22,14 @@ var testObj = {
             id: '12345sssdds6sdsds61ddd2dd212',
             name: 'user JOIN and INVITE Test',
             type: 'course',
-            announcements_only: true,
+            bidirectional: true,
             is_moderator: true 
         },
         {
             id: 'sdgdfsgeedsdsddffewsdfg',
             name: 'user JOIN and INVITE Test 2',
             type: 'course',
-            announcements_only: false,
+            bidirectional: false,
             is_moderator: false 
         },
     ]
@@ -128,9 +128,9 @@ async function syncUserWithMatrix(payload){
 
         await joinUserToRoom(user_id, fq_alias);
         // check if exists and permissions levels are what we want
-        var desiredUserPower = 0;
-        if (room.announcements_only == true){
-            desiredUserPower = 50;
+        var desiredUserPower = 50;
+        if (room.bidirectional == true){
+            desiredUserPower = 0;
         }
         // this can run async
         setRoomEventsDefault(room_matrix_id, desiredUserPower);
@@ -186,7 +186,8 @@ async function setRoomEventsDefault(room_matrix_id, events_default){
 async function joinUserToRoom(user_id, fq_alias){        
     // join user
     // note that we need to encode the #
-     await matrix_admin_api.post('/_synapse/admin/v1/invite/' + fq_alias, {
+    //POST /_matrix/client/r0/rooms/{roomId}/invite
+     await matrix_admin_api.post('/_matrix/client/r0/directory/room/' + fq_alias + '/invite', {
          user_id: user_id
      })
      .then(function (response) {

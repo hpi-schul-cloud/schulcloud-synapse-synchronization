@@ -32,7 +32,7 @@ Logic:
             name: 'Mathe 6b',
             type: 'course',
             is_moderator: false,
-            announcements_only: true
+            bidirectional: true
         },
         ...
     ]
