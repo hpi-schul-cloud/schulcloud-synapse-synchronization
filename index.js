@@ -7,35 +7,57 @@ const RABBIT_MQ_QUEUE = Configuration.get("RABBIT_MQ_QUEUE");
 
 var testObj = {
     school:{
-     id: "testschool001",
+     id: "testschoolRC001",
      has_allhands_channel : true,
      name: "Peanuts High 001"
     },
      user: {
-      id: "@user:matrix.stomt.com",//numeric is not allowed
-      name: "Joe Cools Katze",
-      is_school_admin: false,
+      id: "@user06:matrix.stomt.com",//numeric is not allowed
+      name: "Dr. Specht",
+      is_school_admin: true,
       is_teacher: true,
       tags: ["Mathe", "Sport"] // could be used for global room invites
     },
     rooms:[
         {
-            id: '12345sssdds6sdsds61ddd2dd21211',
-            name: 'user JOIN and INVITE Test',
-            type: 'course',
-            bidirectional: true,
-            is_moderator: true 
-        },
-        {
-            id: 'sdgdfsgeedsdsddffewsdfg11',
-            name: 'user JOIN and INVITE Test 2',
+            id: '0000122222',
+            name: 'Kurs 1',
             type: 'course',
             bidirectional: false,
-            is_moderator: false 
+            is_moderator: true
+        },
+        {
+            id: '000111111',
+            name: 'Team 777',
+            type: 'team',
+            bidirectional: true,
+            is_moderator: true
+        },
+        {
+            id: '000004(bi)',
+            name: 'team 4',
+            type: 'team',
+            bidirectional: false,
+            is_moderator: false
         },
     ]
 }
-
+var testObj2 = {
+    school:{
+     id: "testschool003",
+     has_allhands_channel : true,
+     name: "Peanuts High 003"
+    },
+     user: {
+      id: "@test666:matrix.stomt.com",//numeric is not allowed
+      name: "Joe Cool",
+      is_school_admin: true,
+      is_teacher: true,
+      tags: ["Mathe", "Sport"] // could be used for global room invites
+    },
+    rooms:[
+    ]
+}
 var amqp = require('amqplib/callback_api');
 var fs = require('fs');
 
@@ -82,28 +104,23 @@ async function asyncForEach(array, callback) {
 };
 
 async function syncUserWithMatrix(payload){
-
-  let default_room_params = {};
   let user_id = payload.user.id;
   let user_already_present = false;
   // check if user exists
-  // GET /_synapse/admin/v2/users/<user_id>
   await matrix_admin_api.get('/_synapse/admin/v2/users/'+user_id)
     .then(function (response) {
         if (response.status == 200){
             user_already_present = true;
             console.log("user " + user_id + " found");
         }
-        //do we need something from the user?
     })
     .catch(function (error) {
-        // handle error
         console.log("user not there yet");
     }
   );
   // PUT /_synapse/admin/v2/users/<user_id>
   if (user_already_present == false){
-    console.log("create user");
+    console.log("create user " + payload.user.name);
     await matrix_admin_api.put('/_synapse/admin/v2/users/' + user_id, {
             "password": Math.random().toString(36), // we will never use this, password login should be disabled
             "displayname": payload.user.name,
@@ -112,11 +129,8 @@ async function syncUserWithMatrix(payload){
       })
     .then(function (response) {
         console.log("user created");
-        // console.log(response);
-        //do we need something from the user?
     })
     .catch(function (error) {
-        // handle error
         console.log(error);
     })
   }
@@ -125,8 +139,7 @@ async function syncUserWithMatrix(payload){
     asyncForEach(payload.rooms, async (room) => {
         let alias = room.type + "_" + room.id;
         var fq_alias = "%23" + alias + ":" + MATRIX_DOMAIN;
-        let room_matrix_id = await createRoom(fq_alias, alias, room.name, payload.school.name);
-
+        let [room_matrix_id] = await createRoom(fq_alias, alias, room.name, payload.school.name);
         await joinUserToRoom(user_id, room_matrix_id);
         // check if exists and permissions levels are what we want
         var desiredUserPower = 50;
@@ -136,21 +149,19 @@ async function syncUserWithMatrix(payload){
         // this can run async
         setRoomEventsDefault(room_matrix_id, desiredUserPower);
         setModerator(room_matrix_id, payload.user.id, room.is_moderator);
-
     });
   }
 
     // always join user (previous check can be implemented later)
     if (payload.school.has_allhands_channel) {
-        console.log("$$$$$$$All Hands");
         let room_name = "Ankündigungen";
         let topic = "Ankündigungen der " + payload.school.name;
         let alias = "news_" + payload.school.id;
         var fq_alias = "%23" + alias + ":" + MATRIX_DOMAIN;
-        var room_matrix_id = await createRoom(fq_alias, alias, room_name, payload.school.name, topic);
+        var [room_matrix_id, current_permission] = await createRoom(fq_alias, alias, room_name, payload.school.name, topic, payload.user.is_school_admin? payload.user.id : null );
         setRoomEventsDefault(room_matrix_id, 50);
         await joinUserToRoom(user_id, room_matrix_id);
-        if (payload.user.is_school_admin) {
+        if (payload.user.is_school_admin && current_permission != 50) {
             setModerator(room_matrix_id, payload.user.id, true);
         }
      }else{
@@ -159,15 +170,14 @@ async function syncUserWithMatrix(payload){
 
      //lehrerzimmer
      if (payload.user.is_teacher == true) {
-        console.log("Lehrerzimmer ");
         let room_name = "Lehrerzimmer";
         let topic = "Lehrerzimmer der " + payload.school.name;
         let alias = "teachers_" + payload.school.id;
         var fq_alias = "%23" + alias + ":" + MATRIX_DOMAIN;
-        var room_matrix_id = await createRoom(fq_alias, alias, room_name, payload.school.name, topic);
+        var [room_matrix_id, current_permission] = await createRoom(fq_alias, alias, room_name, payload.school.name, topic);
         // setRoomEventsDefault(room_matrix_id, 50);
         await joinUserToRoom(user_id, room_matrix_id);
-        if (payload.user.is_school_admin) {
+        if (payload.user.is_school_admin && current_permission != 50) {
             setModerator(room_matrix_id, payload.user.id, true);
         }
      }
@@ -175,22 +185,11 @@ async function syncUserWithMatrix(payload){
 
 // check if room exists, if not create
 async function setRoomEventsDefault(room_matrix_id, events_default){
-    var room_state = {};
-    await matrix_admin_api.get('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels').then(function (response) {
-        if (response.status == 200){
-            room_state = response.data;
-            // console.log(response.data);
-        }
-    })
-    .catch(function (error) {
-        console.log(error);
-      }
-    )
-    if (room_state.events_default != events_default){
+    var room_state = await getRoomState(room_matrix_id);
+    if (room_state && room_state.events_default != events_default){
         room_state.events_default = events_default;
         await matrix_admin_api.put('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels', room_state)
         .then(function (response) {
-            // console.log(response.data);
         })
         .catch(function (error) {
             console.log(error);
@@ -199,8 +198,9 @@ async function setRoomEventsDefault(room_matrix_id, events_default){
     }
 }
 
-async function joinUserToRoom(user_id, room_id){        
+async function joinUserToRoom(user_id, room_id){
     // join user
+    // !TODO: Check if the user is already in the room to avoid reseting the user state
     // note that we need to encode the #
     //POST /_matrix/client/r0/rooms/{roomId}/invite
      await matrix_admin_api.post('/_matrix/client/r0/rooms/' + room_id + '/invite', {
@@ -230,20 +230,38 @@ async function joinUserToRoom(user_id, room_id){
 }
 
 // returns room_matrix_id
-async function createRoom(fq_alias, alias, room_name, school_name, topic = null){
+async function createRoom(fq_alias, alias, room_name, school_name, topic = null, user_id = null){
     let room_already_present = false;
-    console.log("check room " + fq_alias);
+    // console.log("check room " + fq_alias);
+        var room_matrix_id = null;
+        var current_user_level = null;
         await matrix_admin_api.get('/_matrix/client/r0/directory/room/' + fq_alias)
         .then(function (response) {
             if (response.status == 200){
                 room_already_present = true;
                 room_matrix_id = response.data.room_id;
                 console.log("room " + room_matrix_id + " found");
+                var current_permission = null;
             }
         })
         .catch(function (error) {
             console.log("room " + fq_alias + " not found");
         })
+
+        if (user_id && room_matrix_id) {
+            var room_state = await matrix_admin_api.get('/_matrix/client/r0/rooms/' + room_matrix_id + '/state').then(function (response) {
+                if (response.status == 200){
+                    if (response.data && response.data.users && response.data.users[user_id]){
+                        current_user_level = response.data.users[user_id];
+                    };
+                }
+            })
+            .catch(function (error) {
+                console.log(error);
+            }
+            )
+        }
+
         // TODO: Update room title if needed
         //create room
         if (room_already_present == false){
@@ -267,37 +285,47 @@ async function createRoom(fq_alias, alias, room_name, school_name, topic = null)
               }
             )
         }
-        return room_matrix_id;
+        // user_permission_
+        return [room_matrix_id, current_user_level];
 }
 
-async function setModerator(room_matrix_id, user_id, is_moderator){
-    // check moderator
+async function getRoomState(room_matrix_id){
+    var data = null;
     await matrix_admin_api.get('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels').then(function (response) {
         if (response.status == 200){
-            room_state = response.data;
-            // console.log(response.data);
+            data = response.data;
         }
+    }).catch(function (error) {
+        console.log(error);
+    }
+    )
+    return data;
+}
+
+async function setRoomState(room_matrix_id, state){
+    await matrix_admin_api.put('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels', room_state)
+    .then(function (response) {
+        console.log("set mod right for " + user_id + " in " + room_matrix_id );
     })
     .catch(function (error) {
         console.log(error);
     }
     )
-    if (is_moderator) {
+    return;
+}
+
+async function setModerator(room_matrix_id, user_id, is_moderator){
+    // check moderator
+    var room_state = await getRoomState(room_matrix_id);
+    if (is_moderator && room_state && room_state.users) {
         if (!(room_state.users[user_id] && room_state.users[user_id] == 50)){
             room_state.users[user_id] = 50;
-            await matrix_admin_api.put('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels', room_state)
-            .then(function (response) {
-                console.log(response.data);
-            })
-            .catch(function (error) {
-                console.log(error);
-            }
-            )
+            await setRoomState(room_matrix_id, room_state)
         }else{
             console.log("user is already a moderator");
         }
         //TODO: Delete moderator if value is false
-    }else if (room_state.users[user_id] && room_state.users[user_id] == 50){
+    }else if (room_state && room_state.user && room_state.users[user_id] && room_state.users[user_id] == 50){
         delete room_state.users[user_id];
         await matrix_admin_api.put('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels', room_state)
         .then(function (response) {
@@ -312,3 +340,36 @@ async function setModerator(room_matrix_id, user_id, is_moderator){
 
 // run for dev testing
 syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);
+// syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);
+// syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj2);
