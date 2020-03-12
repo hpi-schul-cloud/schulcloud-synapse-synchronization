@@ -19,15 +19,15 @@ var testObj = {
     },
     rooms:[
         {
-            id: '12345sssdds6s61ddd2dd212',
-            name: 'Accouncement Test',
+            id: '12345sssdds6sdsds61ddd2dd212',
+            name: 'user JOIN and INVITE Test',
             type: 'course',
             announcements_only: true,
             is_moderator: true 
         },
         {
-            id: 'sdgdfsgeeddffewsdfg',
-            name: 'Kurs 5 (bidirektional)',
+            id: 'sdgdfsgeedsdsddffewsdfg',
+            name: 'user JOIN and INVITE Test 2',
             type: 'course',
             announcements_only: false,
             is_moderator: false 
@@ -69,7 +69,7 @@ amqp.connect(RABBIT_MQ, function(error0, connection) {
         console.log(" [x] Received %s", msg.content.toString());
         this.syncUserWithMatrix(msg.content);
     }, {
-        noAck: true
+        noAck: true //TODO: check this setting
     });
   });
 });
@@ -126,21 +126,7 @@ async function syncUserWithMatrix(payload){
         var fq_alias = "%23" + alias + ":" + MATRIX_DOMAIN;
         let room_matrix_id = await createRoom(fq_alias, alias, room.name, payload.school.name);
 
-        //join user
-       // note that we need to encode the #
-        // await matrix_admin_api.post('/_synapse/admin/v1/join/' + fq_alias, {
-        //     user_id: user_id
-        // })
-        // .then(function (response) {
-        //     if (response.status == 200){
-        //         console.log("user " + alias + " joined " + fq_alias);
-        //     }
-        // })
-        // .catch(function (error) {
-        //     console.log(error);
-        //   }
-        // )
-
+        await joinUserToRoom(user_id, fq_alias);
         // check if exists and permissions levels are what we want
         var desiredUserPower = 0;
         if (room.announcements_only == true){
@@ -162,11 +148,12 @@ async function syncUserWithMatrix(payload){
         var fq_alias = "%23" + alias + ":" + MATRIX_DOMAIN;
         var room_matrix_id = await createRoom(fq_alias, alias, room_name, school_name, topic);
         setRoomEventsDefault(room_matrix_id, 50);
+        await joinUserToRoom(user_id, fq_alias);
         if (payload.user.is_school_admin) {
             setModerator(room_matrix_id, payload.user.id, true);
         }
      }else{
-         //TODO: delete or block room if setting is changed
+        //TODO: delete or block room if setting is changed
      }
 };
 
@@ -194,6 +181,35 @@ async function setRoomEventsDefault(room_matrix_id, events_default){
         }
         )
     }
+}
+
+async function joinUserToRoom(user_id, fq_alias){        
+    // join user
+    // note that we need to encode the #
+     await matrix_admin_api.post('/_synapse/admin/v1/invite/' + fq_alias, {
+         user_id: user_id
+     })
+     .then(function (response) {
+         if (response.status == 200){
+             console.log("user " + alias + " invited " + fq_alias);
+         }
+     })
+     .catch(function (error) {
+         console.log(error);
+       }
+     )
+     await matrix_admin_api.post('/_synapse/admin/v1/join/' + fq_alias, {
+         user_id: user_id
+     })
+     .then(function (response) {
+         if (response.status == 200){
+             console.log("user " + alias + " joined " + fq_alias);
+         }
+     })
+     .catch(function (error) {
+         console.log(error);
+       }
+     )
 }
 
 // returns room_matrix_id
@@ -263,7 +279,7 @@ async function setModerator(room_matrix_id, user_id, is_moderator){
         }else{
             console.log("user is already a moderator");
         }
-        //TODO: Delete moderator if valiue is false
+        //TODO: Delete moderator if value is false
     }else if (room_state.users[user_id] && room_state.users[user_id] == 50){
         delete room_state.users[user_id];
         await matrix_admin_api.put('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels', room_state)
