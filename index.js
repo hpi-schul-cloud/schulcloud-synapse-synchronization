@@ -7,26 +7,26 @@ const RABBIT_MQ_QUEUE = Configuration.get("RABBIT_MQ_QUEUE");
 
 var testObj = {
     school:{
-     id: 1223435,
+     id: "testschool001",
      has_allhands_channel : true,
-     name: "Peanuts High"
+     name: "Peanuts High 001"
     },
      user: {
       id: "@user:matrix.stomt.com",//numeric is not allowed
       name: "Joe Cools Katze",
-      is_school_admin: true,
+      is_school_admin: false,
       tags: ["Mathe", "Sport"] // could be used for global room invites
     },
     rooms:[
         {
-            id: '12345sssdds6sdsds61ddd2dd212',
+            id: '12345sssdds6sdsds61ddd2dd21211',
             name: 'user JOIN and INVITE Test',
             type: 'course',
             bidirectional: true,
             is_moderator: true 
         },
         {
-            id: 'sdgdfsgeedsdsddffewsdfg',
+            id: 'sdgdfsgeedsdsddffewsdfg11',
             name: 'user JOIN and INVITE Test 2',
             type: 'course',
             bidirectional: false,
@@ -140,15 +140,15 @@ async function syncUserWithMatrix(payload){
   }
 
     // always join user (previous check can be implemented later)
-    if (payload.school_has_allhands_channel) {
-    //     let alias = "all_users_"+ school_id;
+    if (payload.school.has_allhands_channel) {
+        console.log("$$$$$$$All Hands");
         let room_name = "Ankündigungen";
         let topic = "Ankündigungen der " + payload.school.name;
         let alias =  + "news_" + payload.school.id;
         var fq_alias = "%23" + alias + ":" + MATRIX_DOMAIN;
-        var room_matrix_id = await createRoom(fq_alias, alias, room_name, school_name, topic);
+        var room_matrix_id = await createRoom(fq_alias, alias, room_name, payload.school.name, topic);
         setRoomEventsDefault(room_matrix_id, 50);
-        await joinUserToRoom(user_id, fq_alias);
+        await joinUserToRoom(user_id, room_matrix_id);
         if (payload.user.is_school_admin) {
             setModerator(room_matrix_id, payload.user.id, true);
         }
@@ -196,7 +196,7 @@ async function joinUserToRoom(user_id, room_id){
          }
      })
      .catch(function (error) {
-         console.log(error);
+        // user may already be in the room
        }
      )
      await matrix_admin_api.post('/_synapse/admin/v1/join/' + room_id, {
