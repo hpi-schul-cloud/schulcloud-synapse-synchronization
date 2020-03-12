@@ -27,8 +27,8 @@ var testObj = {
             is_moderator: true
         },
         {
-            id: '000111111',
-            name: 'Team 777',
+            id: '00011111ww1xxxxyt',
+            name: 'Team 777xxxxt',
             type: 'team',
             bidirectional: true,
             is_moderator: true
@@ -241,7 +241,6 @@ async function createRoom(fq_alias, alias, room_name, school_name, topic = null,
                 room_already_present = true;
                 room_matrix_id = response.data.room_id;
                 console.log("room " + room_matrix_id + " found");
-                var current_permission = null;
             }
         })
         .catch(function (error) {
@@ -270,8 +269,7 @@ async function createRoom(fq_alias, alias, room_name, school_name, topic = null,
                 "room_alias_name": alias,
                 "name": room_name,
                 "topic": topic? topic : "Kanal für " + room_name + " (" + school_name + ")",
-                "creation_content": {
-                }
+                "creation_content": {}
             })
             .then(function (response) {
                 if (response.status == 200){
@@ -284,6 +282,9 @@ async function createRoom(fq_alias, alias, room_name, school_name, topic = null,
                 console.log("room " + alias + " not found");
               }
             )
+            var tmp_state = await getRoomState(room_matrix_id);
+            tmp_state.invite = 70;
+            setRoomState(room_matrix_id, tmp_state);
         }
         // user_permission_
         return [room_matrix_id, current_user_level];
@@ -340,36 +341,4 @@ async function setModerator(room_matrix_id, user_id, is_moderator){
 
 // run for dev testing
 syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);
-// syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);
-// syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);syncUserWithMatrix(testObj);
-// syncUserWithMatrix(testObj2);
+syncUserWithMatrix(testObj2);
