@@ -295,4 +295,4 @@ async function setModerator(room_matrix_id, user_id, is_moderator){
 }
 
 // run for dev testing
-syncUserWithMatrix(testObj);
+// syncUserWithMatrix(testObj);
