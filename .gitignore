@@ -117,3 +117,6 @@ dist
 # IDE
 .idea
 *.iml
+
+# Project
+config/secrets.json

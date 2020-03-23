@@ -7,12 +7,7 @@
 			"default": "matrix.schul-cloud.org",
 			"description": "The domain where we find our specific matrix server"
         },
-        "MATRIX_HOME_DOMAIN": {
-			"type": "string",
-			"default": "matrix.schul-cloud.org",
-			"description": "The domain where we find our specific matrix server for global rooms"
-        },
-        "RABBIT_MQ": {
+        "RABBITMQ_URI": {
             "type": "string",
             "format": "uri",
             "pattern":".*(?<!/)$",

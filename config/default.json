@@ -1,6 +1,5 @@
 {
    "MATRIX_DOMAIN": "matrix.stomt.com",
-   "MATRIX_HOME_DOMAIN": "matrix.schul-cloud.org",
-   "RABBIT_MQ": "amqp://localhost",
+   "RABBITMQ_URI": "amqp://localhost",
    "RABBIT_MQ_QUEUE": "matrix_sync_populated"
 }
