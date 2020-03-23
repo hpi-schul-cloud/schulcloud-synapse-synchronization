@@ -42,9 +42,7 @@ async function syncUserWithMatrix(payload) {
       .then(function(_) {
         console.log("user created");
       })
-      .catch(function(error) {
-        console.log(error);
-      })
+      .catch(logRequestError)
   }
 
   if (payload.rooms) {
@@ -103,10 +101,7 @@ async function setRoomEventsDefault(room_matrix_id, events_default) {
     await matrix_admin_api.put('/_matrix/client/r0/rooms/' + room_matrix_id + '/state/m.room.power_levels', room_state)
       .then(function(response) {
       })
-      .catch(function(error) {
-          console.log(error);
-        }
-      )
+      .catch(logRequestError)
   }
 }
 
@@ -135,10 +130,7 @@ async function joinUserToRoom(user_id, room_id) {
         console.log("user " + user_id + " joined " + room_id);
       }
     })
-    .catch(function(error) {
-        console.log(error);
-      }
-    )
+    .catch(logRequestError)
 }
 
 // returns room_matrix_id
@@ -167,10 +159,7 @@ async function createRoom(fq_alias, alias, room_name, school_name, topic = null,
           }
         }
       })
-      .catch(function(error) {
-          console.log(error);
-        }
-      )
+      .catch(logRequestError)
   }
 
   // TODO: Update room title if needed
@@ -208,10 +197,7 @@ async function getRoomState(room_matrix_id) {
     if (response.status === 200) {
       data = response.data;
     }
-  }).catch(function(error) {
-      console.log(error);
-    }
-  );
+  }).catch(logRequestError);
   return data;
 }
 
@@ -220,10 +206,7 @@ async function setRoomState(room_matrix_id, room_state) {
     .then(function(_) {
       console.log("set roomm state in " + room_matrix_id);
     })
-    .catch(function(error) {
-        console.log(error);
-      }
-    );
+    .catch(logRequestError);
 }
 
 async function setModerator(room_matrix_id, user_id, is_moderator) {
@@ -243,10 +226,7 @@ async function setModerator(room_matrix_id, user_id, is_moderator) {
       .then(function(response) {
         console.log(response.data);
       })
-      .catch(function(error) {
-          console.log(error);
-        }
-      )
+      .catch(logRequestError);
   }
 }
 
@@ -254,4 +234,9 @@ async function asyncForEach(array, callback) {
   for (let index = 0; index < array.length; index++) {
     await callback(array[index], index, array);
   }
+}
+
+
+function logRequestError(error) {
+  console.error(error.response.status);
 }

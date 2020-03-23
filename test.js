@@ -36,7 +36,8 @@ const testObj = {
       is_moderator: false
     },
   ]
-}
+};
+
 const testObj2 = {
   school:{
     id: "testschool003",
@@ -52,7 +53,7 @@ const testObj2 = {
   },
   rooms:[
   ]
-}
+};
 
 // run for dev testing
 syncer.syncUserWithMatrix(testObj);
