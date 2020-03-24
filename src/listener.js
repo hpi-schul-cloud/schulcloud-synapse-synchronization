@@ -8,6 +8,7 @@ const CONCURRENCY = 1;
 
 module.exports = {
   listen: listen,
+  onMessage: onMessage,
 };
 
 let messageNumber = 0;

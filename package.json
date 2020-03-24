@@ -1,8 +1,23 @@
 {
+  "name": "schulcloud-synapse-synchronization",
+  "description": "Synchronizes Schul-Cloud users, classes and team with a matrix based synapse messaging server",
+  "version": "0.0.1",
+  "homepage": "https://schul-cloud.org",
+  "main": "src/",
+  "license": "AGPL-3.0",
+  "repository": {
+    "git": "git@github.com:schul-cloud/schulcloud-synapse-synchronization.git"
+  },
+  "engines": {
+    "node": "lts/*"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "test": "node test.js"
+  },
   "dependencies": {
     "@schul-cloud/commons": "^1.0.16",
     "amqplib": "^0.5.5",
-    "axios": "^0.19.2",
-    "fs": "^0.0.1-security"
+    "axios": "^0.19.2"
   }
 }
