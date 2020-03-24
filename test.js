@@ -113,12 +113,13 @@ async function executeRandomizedTests(amount_users = 10, amount_rooms = 5) {
     while (msg.rooms.length < amount_rooms_for_user) {
       const roomIndex = Math.floor(Math.random() * rooms.length);
       let room = rooms[roomIndex];
-      room.is_moderator = user.is_school_teacher;
-      msg.rooms.push(room);
-      // TODO: don't add same room twice
+      if (msg.rooms.filter(r => r.id === room.id ).length === 0) {
+        room.is_moderator = user.is_school_teacher;
+        msg.rooms.push(room);
+      }
     }
 
-    await syncer.syncUserWithMatrix(msg);
+    await syncer.syncUserWithMatrix(msg).catch(console.error);
   }
 }
 
@@ -134,8 +135,7 @@ function randomString(length) {
   return result;
 }
 
-
-executeRandomizedTests(3, 5)
+executeRandomizedTests(5, 5)
   .then(() => {
     console.log('DONE');
   });
