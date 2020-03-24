@@ -12,7 +12,13 @@ const schoolCloudSeed = [
   {
     "method": "adduser",
     "school": {"id": "0000d186816abba584714c5f", "has_allhands_channel": true, "name": "Paul-Gerhardt-Gymnasium "},
-    "user": {"id": "@sso_58b40278dac20e0645353e3a:matrix.stomt.com", "name": "Waldemar Wunderlich", "email": "waldemar.wunderlich@schul-cloud.org", "is_school_admin": false, "is_school_teacher": false},
+    "user": {
+      "id": "@sso_58b40278dac20e0645353e3a:matrix.stomt.com",
+      "name": "Waldemar Wunderlich",
+      "email": "waldemar.wunderlich@schul-cloud.org",
+      "is_school_admin": false,
+      "is_school_teacher": false
+    },
     "rooms": [{"id": "5e1dc275322ce040a850b14b", "name": "A-Team", "type": "team", "bidirectional": false, "is_moderator": false}]
   },
 
@@ -66,7 +72,70 @@ async function executeTests() {
   }
 }
 
-executeTests()
+async function executeRandomizedTests(amount_users = 10, amount_rooms = 5) {
+  const school = {
+    "id": randomString(20),
+    "has_allhands_channel": true,
+    "name": "Random School",
+  };
+
+  let users = [];
+  for (let i = 0; i < amount_users; i++) {
+    users.push({
+      "id": `@test_${randomString(10)}:matrix.stomt.com`,
+      "name": "Random Test User",
+      "email": `${randomString(10)}@test.com`,
+      "is_school_admin": false,
+      "is_school_teacher": false,
+    });
+  }
+
+  let rooms = [];
+  for (let i = 0; i < amount_rooms; i++) {
+    rooms.push({
+      "id": `${randomString(10)}`,
+      "name": "Random Room",
+      "type": "course",
+      "bidirectional": false,
+      "is_moderator": false,
+    });
+  }
+
+  for (let user of users) {
+
+    let msg = {
+      school: school,
+      user: user,
+      rooms: [],
+    };
+    const amount_rooms_for_user = Math.random() * 5;
+
+    while (msg.rooms.length < amount_rooms_for_user) {
+      const roomIndex = Math.floor(Math.random() * rooms.length);
+      let room = rooms[roomIndex];
+      room.is_moderator = user.is_school_teacher;
+      msg.rooms.push(room);
+      // TODO: don't add same room twice
+    }
+
+    await syncer.syncUserWithMatrix(msg);
+  }
+}
+
+function randomString(length) {
+  const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const charactersLength = characters.length;
+
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+
+  return result;
+}
+
+
+executeRandomizedTests(3, 5)
   .then(() => {
     console.log('DONE');
   });
