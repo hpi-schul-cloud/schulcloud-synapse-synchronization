@@ -1,17 +1,17 @@
 {
-	"title": "Matrix SC Syncer Configuration",
+	"title": "Schul-Cloud Synapse Synchronization Configuration",
 	"type": "object",
 	"properties": {
 		"MATRIX_DOMAIN": {
 			"type": "string",
-			"default": "matrix.schul-cloud.org",
+			"default": "matrix.messenger.schule",
 			"description": "The domain where we find our specific matrix server"
         },
         "RABBITMQ_URI": {
             "type": "string",
             "format": "uri",
             "pattern":".*(?<!/)$",
-			"default": "amqp://localhost",
+			"default": "amqp://192.168.99.100",
 			"description": "The FQ-URI to our RabbitMq / amqp Server"
         },
         "RABBIT_MQ_QUEUE": {
