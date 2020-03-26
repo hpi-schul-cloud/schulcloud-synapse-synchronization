@@ -109,6 +109,7 @@ async function syncUserWithMatrix(payload) {
 // INTERNAL FUNCTIONS
 async function getOrCreateUser(user) {
   // check if user exists
+  // Docu: https://github.com/matrix-org/synapse/blob/master/docs/admin_api/user_admin_api.rst#query-account
   await matrix_admin_api
     .get('/_synapse/admin/v2/users/' + user.id)
     .then(function(_) {
@@ -121,10 +122,17 @@ async function getOrCreateUser(user) {
 }
 
 async function createUser(user) {
+  // Docu: https://github.com/matrix-org/synapse/blob/master/docs/admin_api/user_admin_api.rst#create-or-modify-account
   return matrix_admin_api
     .put('/_synapse/admin/v2/users/' + user.id, {
       "password": Math.random().toString(36), // we will never use this, password login should be disabled
       "displayname": user.name,
+      "threepids": [
+        {
+          "medium": "email",
+          "address": user.email,
+        }
+      ],
       "admin": false,
       "deactivated": false
     })
