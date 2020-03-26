@@ -123,19 +123,22 @@ async function getOrCreateUser(user) {
 
 async function createUser(user) {
   // Docu: https://github.com/matrix-org/synapse/blob/master/docs/admin_api/user_admin_api.rst#create-or-modify-account
+  let newUser = {
+    "password": Math.random().toString(36), // we will never use this, password login should be disabled
+    "displayname": user.name,
+    "threepids": [],
+    "admin": false,
+    "deactivated": false
+  };
+  if (user.email) {
+    newUser.threepids.push({
+      "medium": "email",
+      "address": user.email,
+    });
+  }
+
   return matrix_admin_api
-    .put('/_synapse/admin/v2/users/' + user.id, {
-      "password": Math.random().toString(36), // we will never use this, password login should be disabled
-      "displayname": user.name,
-      "threepids": [
-        {
-          "medium": "email",
-          "address": user.email,
-        }
-      ],
-      "admin": false,
-      "deactivated": false
-    })
+    .put('/_synapse/admin/v2/users/' + user.id, newUser)
     .then(function(_) {
       console.log("user " + user.id + " created.");
     })
