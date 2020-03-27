@@ -6,6 +6,7 @@ The synchronization is unidirectional, changes on the matrix server are not
 propagated back to the Schul-Cloud.
 
 The code is based on: https://github.com/matrix-org/matrix-appservice-node
+
 Creation of users see: https://github.com/matrix-org/synapse/blob/master/docs/admin_api/user_admin_api.rst
 
 ## Configuration
@@ -24,7 +25,7 @@ curl -XPOST \
 
 ## Logic
 
-1. Receives incoming request with payload like this:
+### 1. Receives incoming request with payload like this:
 
 ```json
 {
@@ -37,7 +38,7 @@ curl -XPOST \
     "user": {
       "id": "@sso_0000d224816abba584714c9c:matrix.server.com",
       "name": "Marla Mathe",
-      "email": "schueler@schul-cloud.org"
+      "email": "schueler@schul-cloud.org",
       "is_school_admin": false,
       "is_school_teacher": false
     },
@@ -55,13 +56,12 @@ curl -XPOST \
         "type": "team",
         "bidirectional": false,
         "is_moderator": false
-      },
-      ...
+      }
     ]
   }
 ```
 
-2. Sync
+### 2. Sync
 
 - Check if user exits, if not create him.
 - Get all managed rooms by this user.
