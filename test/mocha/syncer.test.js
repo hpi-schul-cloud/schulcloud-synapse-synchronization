@@ -1,16 +1,15 @@
-'use strict';
-
 const {Configuration} = require('@schul-cloud/commons');
-const {after, before, describe, it} = require("mocha");
-const assert = require('assert');
+const {
+  after, before, describe, it,
+} = require('mocha');
+// const assert = require('assert');
 
-const syncer = require('./../../src/syncer');
 const nock = require('nock');
+const syncer = require('../../src/syncer');
 
 const MATRIX_URI = Configuration.get('MATRIX_URI');
 
 describe('syncer', () => {
-
   let scope;
 
   before((done) => {
@@ -20,7 +19,7 @@ describe('syncer', () => {
 
   after((done) => {
     if (!scope.isDone()) {
-      console.error('pending mocks: %j', scope.pendingMocks())
+      console.error('pending mocks: %j', scope.pendingMocks());
     }
     done();
   });
@@ -36,7 +35,7 @@ describe('syncer', () => {
         name: 'test user',
         email: 'test@test.com',
       };
-      return syncer.getOrCreateUser(user)
+      return syncer.getOrCreateUser(user);
     });
     it('create user', () => {
       scope
@@ -51,7 +50,7 @@ describe('syncer', () => {
         name: 'test user',
         email: 'test@test.com',
       };
-      return syncer.getOrCreateUser(user)
+      return syncer.getOrCreateUser(user);
     });
   });
 
@@ -68,9 +67,7 @@ describe('syncer', () => {
       };
 
       return syncer.createUser(user)
-        .catch(() => {
-          return true;
-        });
+        .catch(() => true);
     });
     it('create user', () => {
       scope
@@ -82,8 +79,7 @@ describe('syncer', () => {
         name: 'test user',
         email: 'test@test.com',
       };
-      return syncer.createUser(user)
+      return syncer.createUser(user);
     });
   });
-
 });
