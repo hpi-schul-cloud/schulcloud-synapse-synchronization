@@ -1,26 +1,89 @@
 'use strict';
 
+const {Configuration} = require('@schul-cloud/commons');
+const {after, before, describe, it} = require("mocha");
 const assert = require('assert');
+
 const syncer = require('./../../src/syncer');
+const nock = require('nock');
 
-describe('syncer', function () {
-  before(function (done) {
+const MATRIX_URI = Configuration.get('MATRIX_URI');
+
+describe('syncer', () => {
+
+  let scope;
+
+  before((done) => {
+    scope = nock(MATRIX_URI);
     done();
   });
 
-  after(function (done) {
+  after((done) => {
+    if (!scope.isDone()) {
+      console.error('pending mocks: %j', scope.pendingMocks())
+    }
     done();
   });
 
-  it('syncUserWithMatrix', function () {
-    const message = {
-      "method": "adduser",
-      "school": {"id": "0000d186816abba584714c5f", "has_allhands_channel": true, "name": "Paul-Gerhardt-Gymnasium "},
-      "user": {"id": "@sso_0000d213816abba584714c0a:matrix.stomt.com", "name": "Thorsten Test", "email": "admin@schul-cloud.org", "is_school_admin": true, "is_school_teacher": false},
-      "rooms": [{"id": "0000dcfbfb5c7a3f00bf21ab", "name": "Mathe", "type": "course", "bidirectional": false, "is_moderator": false}]
-    };
+  describe('getOrCreateUser', () => {
+    it('user exists', () => {
+      scope
+        .get('/_synapse/admin/v2/users/test_id')
+        .reply(200, {});
 
-    return syncer
-      .syncUserWithMatrix(message);
+      const user = {
+        id: 'test_id',
+        name: 'test user',
+        email: 'test@test.com',
+      };
+      return syncer.getOrCreateUser(user)
+    });
+    it('create user', () => {
+      scope
+        .get('/_synapse/admin/v2/users/test_id')
+        .reply(404, {});
+      scope
+        .put('/_synapse/admin/v2/users/test_id')
+        .reply(200, {});
+
+      const user = {
+        id: 'test_id',
+        name: 'test user',
+        email: 'test@test.com',
+      };
+      return syncer.getOrCreateUser(user)
+    });
   });
+
+  describe('createUser', () => {
+    it('user exists', () => {
+      scope
+        .put('/_synapse/admin/v2/users/test_id')
+        .reply(400, {});
+
+      const user = {
+        id: 'test_id',
+        name: 'test user',
+        email: 'test@test.com',
+      };
+
+      return syncer.createUser(user)
+        .catch(() => {
+          return true;
+        });
+    });
+    it('create user', () => {
+      scope
+        .put('/_synapse/admin/v2/users/test_id')
+        .reply(200, {});
+
+      const user = {
+        id: 'test_id',
+        name: 'test user',
+        email: 'test@test.com',
+      };
+      return syncer.createUser(user)
+    });
+  });
+
 });

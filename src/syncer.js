@@ -7,6 +7,9 @@ const MATRIX_SYNC_USER_TOKEN = Configuration.get('MATRIX_SYNC_USER_TOKEN');
 
 module.exports = {
   syncUserWithMatrix: syncUserWithMatrix,
+
+  getOrCreateUser: getOrCreateUser,
+  createUser: createUser,
 };
 
 // SETUP API
