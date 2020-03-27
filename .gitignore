@@ -121,3 +121,4 @@ dist
 # Project
 config/secrets.json
 .env
+.nyc_output

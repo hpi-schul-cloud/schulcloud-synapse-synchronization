@@ -1,5 +1,5 @@
-const syncer = require('./src/syncer');
-const listener = require('./src/listener');
+const syncer = require('./../../src/syncer');
+const listener = require('./../../src/listener');
 
 const schoolCloudSeed = [
   {
