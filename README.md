@@ -1,16 +1,32 @@
 # Schul-Cloud Synapse Synchronization
 
-This is for handling an incoming object that describes a user, his desired channel and permissions and then takes care of syncing this to the defined synapse server.
-The synchronization is unidirectional, changes on the matrix server are not propagated back to the Schul-Cloud.
+This is for handling an incoming object that describes a user, his desired channel 
+and permissions and then takes care of syncing this to the defined synapse server.
+The synchronization is unidirectional, changes on the matrix server are not 
+propagated back to the Schul-Cloud.
 
 The code is based on: https://github.com/matrix-org/matrix-appservice-node
 Creation of users see: https://github.com/matrix-org/synapse/blob/master/docs/admin_api/user_admin_api.rst
+
+## Configuration
+
+Configure the variables defined in `/config/default.schema.json` in a local `.env` file: 
+`cp .env.sample .env` or by specifying them as process environment variables.
+
+To generate a valid access token for your sync user execute the following command 
+with your `<userid>`, `<password>` and `<matrixuri>`:
+
+```bash
+curl -XPOST \
+  -d '{"type":"m.login.password", "user":"<userid>", "password":"<password>"}' \
+  "<matrixuri>/_matrix/client/r0/login"
+```
 
 ## Logic
 
 1. Receives incoming request with payload like this:
 
-```
+```json
 {
     "method": "adduser",
     "school": {

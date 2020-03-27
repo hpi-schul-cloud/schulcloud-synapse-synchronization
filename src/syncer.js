@@ -1,9 +1,9 @@
 const {Configuration} = require('@schul-cloud/commons');
-const secrets = require('./secrets');
 const axios = require('axios');
 
-const MATRIX_DOMAIN = Configuration.get('MATRIX_DOMAIN');
-const MATRIX_SYNC_USER_TOKEN = secrets.matrix_sync_user_token;
+const MATRIX_URI = Configuration.get('MATRIX_URI');
+const MATRIX_SERVERNAME = Configuration.get('MATRIX_SERVERNAME');
+const MATRIX_SYNC_USER_TOKEN = Configuration.get('MATRIX_SYNC_USER_TOKEN');
 
 module.exports = {
   syncUserWithMatrix: syncUserWithMatrix,
@@ -11,7 +11,7 @@ module.exports = {
 
 // SETUP API
 const axios_matrix_admin_api = axios.create({
-  baseURL: 'https://' + MATRIX_DOMAIN,
+  baseURL: MATRIX_URI,
   timeout: 10000,
   headers: {'Authorization': 'Bearer ' + MATRIX_SYNC_USER_TOKEN}
 });
@@ -50,7 +50,7 @@ async function syncUserWithMatrix(payload) {
   if (payload.rooms) {
     await asyncForEach(payload.rooms, async (room) => {
       const alias = room.type + "_" + room.id;
-      const fq_alias = "%23" + alias + ":" + MATRIX_DOMAIN;
+      const fq_alias = "%23" + alias + ":" + MATRIX_SERVERNAME;
 
       const room_matrix_id = await getOrCreateRoom(fq_alias, alias, room.name, payload.school.name);
       await joinUserToRoom(user_id, room_matrix_id);
@@ -74,7 +74,7 @@ async function syncUserWithMatrix(payload) {
     const room_name = "Ankündigungen";
     const topic = "Ankündigungen der " + payload.school.name;
     const alias = "news_" + payload.school.id;
-    const fq_alias = "%23" + alias + ":" + MATRIX_DOMAIN;
+    const fq_alias = "%23" + alias + ":" + MATRIX_SERVERNAME;
 
     const room_matrix_id = await getOrCreateRoom(fq_alias, alias, room_name, payload.school.name, topic);
     const current_permission = payload.user.is_school_admin ? await getUserRoomLevel(room_matrix_id, payload.user.id) : null;
@@ -93,7 +93,7 @@ async function syncUserWithMatrix(payload) {
     const room_name = "Lehrerzimmer";
     const topic = "Lehrerzimmer der " + payload.school.name;
     const alias = "teachers_" + payload.school.id;
-    const fq_alias = "%23" + alias + ":" + MATRIX_DOMAIN;
+    const fq_alias = "%23" + alias + ":" + MATRIX_SERVERNAME;
 
     const room_matrix_id = await getOrCreateRoom(fq_alias, alias, room_name, payload.school.name, topic);
     const current_permission = null;

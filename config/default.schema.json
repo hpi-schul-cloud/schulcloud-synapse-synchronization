@@ -2,11 +2,21 @@
 	"title": "Schul-Cloud Synapse Synchronization Configuration",
 	"type": "object",
 	"properties": {
-		"MATRIX_DOMAIN": {
+		"MATRIX_URI": {
+			"type": "string",
+			"default": "https://matrix.messenger.schule",
+			"description": "The domain where we find our specific matrix server"
+		},
+		"MATRIX_SERVERNAME": {
 			"type": "string",
 			"default": "matrix.messenger.schule",
 			"description": "The domain where we find our specific matrix server"
         },
+		"MATRIX_SYNC_USER_TOKEN": {
+			"type": "string",
+			"default": "",
+			"description": "AccessToken of the admin user which executes the synchronization"
+		},
         "RABBITMQ_URI": {
             "type": "string",
             "format": "uri",

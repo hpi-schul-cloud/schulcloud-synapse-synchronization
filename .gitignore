@@ -120,3 +120,4 @@ dist
 
 # Project
 config/secrets.json
+.env
