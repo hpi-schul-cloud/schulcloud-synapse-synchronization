@@ -1,8 +1,8 @@
 # Schul-Cloud Synapse Synchronization
 
-This is for handling an incoming object that describes a user, his desired channel 
+This is for handling an incoming object that describes a user, his desired channel
 and permissions and then takes care of syncing this to the defined synapse server.
-The synchronization is unidirectional, changes on the matrix server are not 
+The synchronization is unidirectional, changes on the matrix server are not
 propagated back to the Schul-Cloud.
 
 The code is based on: https://github.com/matrix-org/matrix-appservice-node
@@ -11,10 +11,10 @@ Creation of users see: https://github.com/matrix-org/synapse/blob/master/docs/ad
 
 ## Configuration
 
-Configure the variables defined in `/config/default.schema.json` in a local `.env` file: 
+Configure the variables defined in `/config/default.schema.json` in a local `.env` file:
 `cp .env.sample .env` or by specifying them as process environment variables.
 
-To generate a valid access token for your sync user execute the following command 
+To generate a valid access token for your sync user execute the following command
 with your `<userid>`, `<password>` and `<matrixuri>`:
 
 ```bash
@@ -75,3 +75,35 @@ We also do not lower the users power level in a sync.
 
 - https://github.com/matrix-org/synapse/pull/7051
 - TODO: Globale Lehrerzimmer: How to ensure invites are not resent to often -> we can not know if user already received invite and declined -> move to dedicated function?
+
+## Container
+
+### Build
+
+To build a default container image run the following code:
+```
+make build
+```
+
+To customize the build process set some environment variables (details see
+Makefile). For example set `DOCKER_IMAGE_TAG` to build a custom image tag:
+```
+make build DOCKER_IMAGE_TAG="foo/bar:latest"
+```
+
+### Push
+
+To push a previously built default container image run the following code:
+```
+make push
+```
+
+**Todo: Currently private credentials (username, password) will be used for
+`docker login` (see `~/.docker/config.json`). This should be made configurable
+later for CI pipelines.**
+
+To customize the push process set some environment variables (details see
+Makefile). For example set `DOCKER_IMAGE_TAG` to push a custom image tag:
+```
+make push DOCKER_IMAGE_TAG="foo/bar:latest"
+```
