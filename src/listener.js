@@ -1,4 +1,4 @@
-const {Configuration} = require('@schul-cloud/commons');
+const { Configuration } = require('@schul-cloud/commons');
 const amqp = require('amqplib/callback_api');
 const syncer = require('./syncer');
 
@@ -15,6 +15,17 @@ let messageNumber = 0;
 
 function listen() {
   amqp.connect(RABBITMQ_URI, (error0, connection) => {
+    process.on('SIGINT', () => {
+      console.log('Caught signal SIGINT, closing connection and exit.');
+      connection.close();
+      process.exit();
+    });
+    process.on('SIGTERM', () => {
+      console.log('Caught signal SIGTERM, closing connection and exit.');
+      connection.close();
+      process.exit();
+    });
+
     if (error0) {
       throw error0;
     }
@@ -27,7 +38,7 @@ function listen() {
         durable: false,
       });
 
-      console.log(' [*] Waiting for messages in %s.', RABBIT_MQ_QUEUE);
+      console.log(' [*] Waiting for messages in %s. To exit press CTRL+C', RABBIT_MQ_QUEUE);
 
       channel.prefetch(CONCURRENCY);
       channel.consume(RABBIT_MQ_QUEUE, (msg) => {
