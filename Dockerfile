@@ -1,17 +1,23 @@
 ARG NODE_IMAGE_TAG="12.16.1-slim"
 
-# --- build --------------------------------------------------------------------
-FROM node:${NODE_IMAGE_TAG} AS build
+# --- base ---------------------------------------------------------------------
+FROM node:${NODE_IMAGE_TAG} AS base
 
-COPY ./ /app
+WORKDIR /app
+
+COPY . .
 
 RUN set -x \
-    && cd /app \
-    && npm install \
+    && npm install --no-optional --only=production \
+    && cp -R node_modules node_modules_production \
+    && npm install
+
+# --- test ---------------------------------------------------------------------
+FROM base AS test
+
+RUN set -x \
     && npm run lint \
-    && npm run test \
-    && rm -rf node_modules \
-    && npm install --no-optional --only=production
+    && npm run test
 
 # --- release ------------------------------------------------------------------
 FROM node:${NODE_IMAGE_TAG} AS release
@@ -22,9 +28,9 @@ WORKDIR /usr/src/app
 
 ENV NODE_ENV "production"
 
-COPY --from=build /app/config /usr/src/app/config/
-COPY --from=build /app/node_modules /usr/src/app/node_modules/
-COPY --from=build /app/src /usr/src/app/src/
-COPY --from=build /app/index.js /usr/src/app
+COPY --from=base /app/config /usr/src/app/config/
+COPY --from=base /app/node_modules_production /usr/src/app/node_modules/
+COPY --from=base /app/src /usr/src/app/src/
+COPY --from=base /app/index.js /usr/src/app
 
 CMD [ "node", "index.js" ]
