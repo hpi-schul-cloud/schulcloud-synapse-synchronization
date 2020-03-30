@@ -13,7 +13,7 @@
   },
   "scripts": {
     "start": "node index.js",
-    "lint": "eslint ./src ./test index.js --ext .js --fix",
+    "lint": "eslint ./src ./test index.js --ext .js",
     "test": "npm run mocha --exit",
     "test:integration": "node test/integration/test.js",
     "mocha": "mocha test/mocha/ --exit --recursive --opts ./test/mocha/mocha.opts",
