@@ -14,10 +14,6 @@ DOCKER_PUSH_OPTIONS ?=
 DOCKER_IMAGE_NAME ?= schulcloud/$(PROJECT_NAME)
 DOCKER_IMAGE_TAG ?= $(DOCKER_IMAGE_NAME):$(GIT_COMMIT_SHORT_SHA)
 
-.PHONE: --login
---login:
-	docker login
-
 .PHONY: build
 build: DOCKER_BUILD_OPTIONS += \
 	--file "$(PROJECT_DIR)/Dockerfile" \
@@ -27,5 +23,5 @@ build:
 
 .PHONY: push
 push: DOCKER_PUSH_OPTIONS +=
-push: --login
+push:
 	docker push $(DOCKER_PUSH_OPTIONS) $(DOCKER_IMAGE_TAG)
