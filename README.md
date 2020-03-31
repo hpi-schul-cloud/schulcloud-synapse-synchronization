@@ -1,4 +1,4 @@
-# Schul-Cloud Synapse Synchronization
+# HPI Schul-Cloud Synapse Synchronization
 
 This is for handling an incoming object that describes a user, his desired channel
 and permissions and then takes care of syncing this to the defined synapse server.
