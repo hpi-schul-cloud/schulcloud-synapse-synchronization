@@ -14,6 +14,7 @@
   "scripts": {
     "start": "node index.js",
     "lint": "eslint ./src ./test index.js --ext .js",
+    "lint:fix": "eslint ./src ./test index.js --ext .js --fix",
     "test": "npm run mocha --exit",
     "test:integration": "node test/integration/test.js",
     "mocha": "mocha test/mocha/ --exit --recursive --opts ./test/mocha/mocha.opts",
