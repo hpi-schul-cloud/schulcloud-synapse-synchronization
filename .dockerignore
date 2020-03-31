@@ -2,3 +2,7 @@
 node_modules
 npm-debug.log
 Makefile
+.idea
+*.iml
+.env
+.nyc_output
