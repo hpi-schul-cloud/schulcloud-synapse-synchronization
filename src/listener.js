@@ -4,6 +4,7 @@ const syncer = require('./syncer');
 
 const RABBITMQ_URI = Configuration.get('RABBITMQ_URI');
 const RABBIT_MQ_QUEUE = Configuration.get('RABBIT_MQ_QUEUE');
+const RABBIT_MQ_QUEUE_DEAD_LETTER = Configuration.get('RABBIT_MQ_QUEUE') + '_dlq';
 const CONCURRENCY = 1;
 
 module.exports = {
@@ -34,7 +35,11 @@ function listen() {
         throw error1;
       }
 
+      // ensure queues exist
       channel.assertQueue(RABBIT_MQ_QUEUE, {
+        durable: false,
+      });
+      channel.assertQueue(RABBIT_MQ_QUEUE_DEAD_LETTER, {
         durable: false,
       });
 
@@ -42,9 +47,21 @@ function listen() {
 
       channel.prefetch(CONCURRENCY);
       channel.consume(RABBIT_MQ_QUEUE, (msg) => {
-        onMessage(msg).then(() => {
-          channel.ack(msg);
-        });
+        onMessage(msg)
+          .then(() => {
+            channel.ack(msg);
+          })
+          .catch(() => {
+            if (!msg.fields.redelivered) {
+              // retry message
+              channel.reject(msg, true);
+            } else {
+              // reject and store message
+              channel.reject(msg, false);
+              channel.sendToQueue(RABBIT_MQ_QUEUE_DEAD_LETTER, msg.content);
+            }
+          })
+        ;
       });
     });
   });
