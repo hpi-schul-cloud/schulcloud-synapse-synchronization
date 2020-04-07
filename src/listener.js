@@ -4,7 +4,7 @@ const syncer = require('./syncer');
 
 const RABBITMQ_URI = Configuration.get('RABBITMQ_URI');
 const RABBIT_MQ_QUEUE = Configuration.get('RABBIT_MQ_QUEUE');
-const RABBIT_MQ_QUEUE_DEAD_LETTER = Configuration.get('RABBIT_MQ_QUEUE') + '_dlq';
+const RABBIT_MQ_QUEUE_DEAD_LETTER = `${RABBIT_MQ_QUEUE}_dlq`;
 const CONCURRENCY = 1;
 
 module.exports = {
@@ -60,8 +60,7 @@ function listen() {
               channel.reject(msg, false);
               channel.sendToQueue(RABBIT_MQ_QUEUE_DEAD_LETTER, msg.content);
             }
-          })
-        ;
+          });
       });
     });
   });
