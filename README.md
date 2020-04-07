@@ -73,7 +73,6 @@ We also do not lower the users power level in a sync.
 
 ## Open Questions:
 
-- https://github.com/matrix-org/synapse/pull/7051
 - TODO: Globale Lehrerzimmer: How to ensure invites are not resent to often -> we can not know if user already received invite and declined -> move to dedicated function?
 
 ## Container
