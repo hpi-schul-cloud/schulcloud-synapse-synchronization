@@ -52,8 +52,14 @@ function listen() {
             channel.ack(msg);
           })
           .catch(() => {
-            channel.sendToQueue(RABBIT_MQ_QUEUE_DEAD_LETTER, msg.content);
-            channel.ack(msg);
+            if (!msg.fields.redelivered) {
+              // retry message
+              channel.reject(msg, true);
+            } else {
+              // reject and store message
+              channel.reject(msg, false);
+              channel.sendToQueue(RABBIT_MQ_QUEUE_DEAD_LETTER, msg.content);
+            }
           })
         ;
       });
