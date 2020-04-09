@@ -13,6 +13,15 @@
       "default": "messenger.schule",
       "description": "The name of the matrix server"
     },
+    "MATRIX_SECRET": {
+      "type": "string",
+      "description": "Shared secret for the Matrix server."
+    },
+    "MATRIX_SYNC_USER_NAME": {
+      "type": "string",
+      "default": "sync",
+      "description": "Name of admin user to manage the server."
+    },
     "MATRIX_SYNC_USER_TOKEN": {
       "type": "string",
       "default": "",
