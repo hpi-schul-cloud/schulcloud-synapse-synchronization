@@ -10,7 +10,7 @@
     },
     "MATRIX_SERVERNAME": {
       "type": "string",
-      "default": "matrix.messenger.schule",
+      "default": "messenger.schule",
       "description": "The name of the matrix server"
     },
     "MATRIX_SYNC_USER_TOKEN": {
