@@ -11,9 +11,9 @@ const axios_matrix_admin_api = axios.create({
 });
 
 const matrix_admin_api = {
-  get: (first, second, third = null) => call('get', first, second, third),
-  put: (first, second, third) => call('put', first, second, third),
-  post: (first, second, third) => call('post', first, second, third),
+  get: (url, second, third = null) => call('get', url, second, third),
+  put: (url, body, third) => call('put', url, body, third),
+  post: (url, body, third) => call('post', url, body, third),
 };
 
 function call(func, first, second, third) {

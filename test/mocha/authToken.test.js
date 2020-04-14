@@ -8,6 +8,7 @@ const nock = require('nock');
 const authToken = require('../../src/authToken');
 
 const MATRIX_URI = Configuration.get('MATRIX_URI');
+const MATRIX_SERVERNAME = Configuration.get('MATRIX_SERVERNAME');
 
 describe('authToken', () => {
   let scope;
@@ -45,6 +46,27 @@ describe('authToken', () => {
   });
 
   describe('getSyncUserToken', () => {
+    it('based on password', () => {
+      Configuration.set('MATRIX_SYNC_USER_PASSWORD', 'password');
+      scope
+        .post('/_matrix/client/r0/login', {
+          type: 'm.login.password',
+          user: '@sync:' + MATRIX_SERVERNAME,
+          password: 'password',
+        })
+        .reply(200, JSON.stringify({
+          access_token: 'randomToken',
+        }));
+
+      return authToken
+        .getSyncUserToken()
+        .then((accessToken) => {
+          assert.ok(accessToken);
+          assert.ok(accessToken === 'randomToken');
+          authToken.clearCache();
+        });
+    });
+
     it('based on secret', () => {
       scope
         .post('/_matrix/client/r0/login')

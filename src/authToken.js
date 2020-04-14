@@ -14,15 +14,18 @@ function clearCache() {
   cached_sync_user_token = null;
 }
 
-function obtainAccessToken(userId, homeserverApiUri, secret) {
-  const loginApiUrl = `${homeserverApiUri}/_matrix/client/r0/login`;
+function generatePassword(userId, secret) {
+  // https://github.com/devture/matrix-synapse-shared-secret-auth
+  return hmacSHA512(userId, secret).toString();
+}
 
-  const password = hmacSHA512(userId, secret).toString();
+function obtainAccessToken(userId, homeserverApiUri, password) {
+  const loginApiUrl = `${homeserverApiUri}/_matrix/client/r0/login`;
 
   const payload = {
     type: 'm.login.password',
     user: userId,
-    password,
+    password: password,
   };
 
   return axios.post(loginApiUrl, payload)
@@ -50,8 +53,9 @@ function getSyncUserToken() {
   const matrixId = `@${username}:${servername}`;
   const matrixUri = Configuration.get('MATRIX_URI');
   const matrixSecret = Configuration.get('MATRIX_SECRET');
+  const password = Configuration.get('MATRIX_SYNC_USER_PASSWORD') || generatePassword(matrixId, matrixSecret);
 
-  cached_sync_user_token = obtainAccessToken(matrixId, matrixUri, matrixSecret)
+  cached_sync_user_token = obtainAccessToken(matrixId, matrixUri, password)
     .then((authObject) => authObject.accessToken);
 
   return cached_sync_user_token;

@@ -2,6 +2,8 @@
    "MATRIX_URI": "https://matrix.messenger.schule",
    "MATRIX_SERVERNAME": "messenger.schule",
    "MATRIX_SYNC_USER_NAME": "sync",
+   "MATRIX_SYNC_USER_PASSWORD": "",
+   "MATRIX_SYNC_USER_TOKEN": "",
    "MATRIX_SECRET": "",
    "RABBITMQ_URI": "amqp://localhost",
    "RABBIT_MQ_QUEUE": "matrix_sync_populated"
