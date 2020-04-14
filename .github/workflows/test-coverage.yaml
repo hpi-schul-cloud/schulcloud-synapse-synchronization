@@ -1,6 +1,6 @@
 name: Test with Coverage
 
-on: [push]:
+on: [push]
 
 jobs:
   test_coverage:
