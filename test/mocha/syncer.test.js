@@ -13,6 +13,7 @@ describe('syncer', () => {
   let scope;
 
   before((done) => {
+    Configuration.set('MATRIX_SYNC_USER_TOKEN', 'token');
     scope = nock(MATRIX_URI);
     done();
   });

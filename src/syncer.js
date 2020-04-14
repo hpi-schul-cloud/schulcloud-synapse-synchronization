@@ -1,44 +1,14 @@
 const {Configuration} = require('@schul-cloud/commons');
-const axios = require('axios');
+const matrix_admin_api = require('./matrixApi');
 
-const MATRIX_URI = Configuration.get('MATRIX_URI');
 const MATRIX_SERVERNAME = Configuration.get('MATRIX_SERVERNAME');
-const MATRIX_SYNC_USER_TOKEN = Configuration.get('MATRIX_SYNC_USER_TOKEN');
 
 module.exports = {
   syncUserWithMatrix,
-
   getOrCreateUser,
   createUser,
 };
 
-// SETUP API
-const axios_matrix_admin_api = axios.create({
-  baseURL: MATRIX_URI,
-  timeout: 10000,
-  headers: {
-    Authorization: `Bearer ${MATRIX_SYNC_USER_TOKEN}`,
-  },
-});
-
-const matrix_admin_api = {
-  get: (first, second, third = null) => call('get', first, second, third),
-  put: (first, second, third) => call('put', first, second, third),
-  post: (first, second, third) => call('post', first, second, third),
-};
-
-function call(func, first, second, third) {
-  return axios_matrix_admin_api[func](first, second, third)
-    .catch(async (error) => {
-      if (error.response && error.response.status === 429) {
-        const timeToWait = error.response.data.retry_after_ms + 100;
-        console.warn(`Waiting for ${timeToWait}ms...`);
-        await sleep(timeToWait);
-        return matrix_admin_api[func](first, second, third);
-      }
-      throw error;
-    });
-}
 
 // PUBLIC FUNCTIONS
 async function syncUserWithMatrix(payload) {
@@ -278,12 +248,24 @@ async function asyncForEach(array, callback) {
 
 // HELPER FUNCTIONS
 function logRequestError(error) {
-  console.error(error.response);
-  throw error;
-}
+  if (error.response) {
+    /*
+     * The request was made and the server responded with a
+     * status code that falls out of the range of 2xx
+     */
+    console.error(error.response.status, error.response.data, error.response.headers);
+  } else if (error.request) {
+    /*
+     * The request was made but no response was received, `error.request`
+     * is an instance of XMLHttpRequest in the browser and an instance
+     * of http.ClientRequest in Node.js
+     */
+    console.error(error.request);
+  } else {
+    // Something happened in setting up the request and triggered an Error
+    console.error('Error', error.message);
+  }
 
-function sleep(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
+  console.log('for request', error.config);
+  throw error;
 }

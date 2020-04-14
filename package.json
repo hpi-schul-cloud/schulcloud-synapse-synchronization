@@ -23,7 +23,8 @@
   "dependencies": {
     "@schul-cloud/commons": "^1.0.16",
     "amqplib": "^0.5.5",
-    "axios": "^0.19.2"
+    "axios": "^0.19.2",
+    "crypto-js": "^4.0.0"
   },
   "devDependencies": {
     "eslint": "^6.8.0",

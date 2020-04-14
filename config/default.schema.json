@@ -13,10 +13,22 @@
       "default": "messenger.schule",
       "description": "The name of the matrix server"
     },
+    "MATRIX_SYNC_USER_NAME": {
+      "type": "string",
+      "default": "sync",
+      "description": "Name of admin user to manage the server."
+    },
+    "MATRIX_SYNC_USER_PASSWORD": {
+      "type": "string",
+      "description": "Shared secret for the Matrix server to generate access tokens. (optional - if MATRIX_SYNC_USER_TOKEN or MATRIX_SECRET are set)"
+    },
     "MATRIX_SYNC_USER_TOKEN": {
       "type": "string",
-      "default": "",
-      "description": "AccessToken of synchronization user which"
+      "description": "AccessToken of synchronization user which. (optional - if MATRIX_SYNC_USER_PASSWORD or MATRIX_SECRET are set)"
+    },
+    "MATRIX_SECRET": {
+      "type": "string",
+      "description": "Shared secret for the Matrix server to generate access tokens. (optional - if MATRIX_SYNC_USER_PASSWORD or MATRIX_SYNC_USER_TOKEN are set)"
     },
     "RABBITMQ_URI": {
       "type": "string",
