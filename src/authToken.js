@@ -25,7 +25,7 @@ function obtainAccessToken(userId, homeserverApiUri, password) {
   const payload = {
     type: 'm.login.password',
     user: userId,
-    password: password,
+    password,
   };
 
   return axios.post(loginApiUrl, payload)

@@ -9,6 +9,7 @@ const authToken = require('../../src/authToken');
 
 const MATRIX_URI = Configuration.get('MATRIX_URI');
 const MATRIX_SERVERNAME = Configuration.get('MATRIX_SERVERNAME');
+const MATRIX_SYNC_USER_NAME = Configuration.get('MATRIX_SYNC_USER_NAME');
 
 describe('authToken', () => {
   let scope;
@@ -51,7 +52,7 @@ describe('authToken', () => {
       scope
         .post('/_matrix/client/r0/login', {
           type: 'm.login.password',
-          user: '@sync:' + MATRIX_SERVERNAME,
+          user: `@${MATRIX_SYNC_USER_NAME}:${MATRIX_SERVERNAME}`,
           password: 'password',
         })
         .reply(200, JSON.stringify({
