@@ -87,9 +87,9 @@ async function syncUserWithMatrix(payload) {
   }
 
   // Lehrerzimmer
-  if (payload.user.is_teacher === true) {
+  if (payload.user.is_school_teacher === true) {
     const room_name = 'Lehrerzimmer';
-    const topic = `Lehrerzimmer der ${payload.school.name}`;
+    const topic = `Lehrerzimmer (${payload.school.name})`;
     const alias = `teachers_${payload.school.id}`;
     const fq_alias = `%23${alias}:${MATRIX_SERVERNAME}`;
 
