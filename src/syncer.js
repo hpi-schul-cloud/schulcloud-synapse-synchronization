@@ -158,12 +158,30 @@ async function getOrCreateRoom(fq_alias, alias, room_name, school_name, topic = 
   return matrix_admin_api
     .get(`/_matrix/client/r0/directory/room/${fq_alias}`)
     .then((response) => {
-      console.log(`room ${response.data.room_id} found`);
-      return response.data.room_id;
+      const {room_id} = response.data;
+      console.log(`room ${room_id} found`);
+      checkRoomName(room_id, room_name);
+      return room_id;
     })
     .catch(async () => {
       console.log(`room ${fq_alias} not found`);
       return createRoom(alias, room_name, school_name, topic);
+    });
+}
+
+async function checkRoomName(room_id, room_name) {
+  return matrix_admin_api
+    .get(`/_matrix/client/r0/rooms/${room_id}/state/m.room.name`)
+    .then((response) => {
+      if (response.data.name !== room_name) {
+        return matrix_admin_api
+          .put(`/_matrix/client/r0/rooms/${room_id}/state/m.room.name`, {name: room_name})
+          .then(() => {
+            console.log(`room name updated to ${room_name}`);
+            return false;
+          });
+      }
+      return true;
     });
 }
 
