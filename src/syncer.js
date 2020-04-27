@@ -1,4 +1,5 @@
 const {Configuration} = require('@schul-cloud/commons');
+const fs = require('fs');
 const matrix_admin_api = require('./matrixApi');
 
 const MATRIX_SERVERNAME = Configuration.get('MATRIX_SERVERNAME');
@@ -11,6 +12,7 @@ const POWER_LEVEL_ADMIN = 100;
 
 module.exports = {
   syncUserWithMatrix,
+  setupSyncUser,
 
   getOrCreateUser,
   createUser,
@@ -68,6 +70,26 @@ async function syncUserWithMatrix(payload) {
 
     const user_power_level = payload.user.is_school_admin ? POWER_LEVEL_MOD : POWER_LEVEL_USER;
     await syncRoomMember(room_state, user_id, user_power_level);
+  }
+}
+
+async function setupSyncUser() {
+  const username = Configuration.get('MATRIX_SYNC_USER_NAME');
+  const servername = Configuration.get('MATRIX_SERVERNAME');
+  const matrixId = `@${username}:${servername}`;
+
+  // set avatar
+  const currentAvatar = await getProfile(matrixId, 'avatar_url');
+  if (!currentAvatar) {
+    const content_uri = await uploadFile('avatar.png', './data/avatar.png', 'image/png');
+    await setProfile(matrixId, 'avatar_url', content_uri);
+  }
+
+  // set displayname
+  const displayname = Configuration.get('MATRIX_SYNC_USER_DISPLAYNAME');
+  const currentDisplayname = await getProfile(matrixId, 'displayname');
+  if (displayname && currentDisplayname !== displayname) {
+    await setProfile(matrixId, 'displayname', displayname);
   }
 }
 
@@ -269,6 +291,40 @@ async function setRoomState(room_id, state_type, content) {
     .catch(logRequestError);
 }
 
+async function uploadFile(file_name, file_path, content_type) {
+  const request_config = {
+    headers: {
+      'content-type': content_type,
+    },
+  };
+
+  return matrix_admin_api
+    .post(`/_matrix/media/r0/upload?filename=${file_name}`, fs.createReadStream(file_path), request_config)
+    .then((response) => {
+      console.log(`File ${file_name} upladed.`);
+      return response.data.content_uri;
+    })
+    .catch(logRequestError);
+}
+
+async function getProfile(user_id, attribute) {
+  return matrix_admin_api
+    .get(`/_matrix/client/r0/profile/${user_id}/${attribute}`)
+    .then((response) => response.data[attribute])
+    .catch(logRequestError);
+}
+
+async function setProfile(user_id, attribute, value) {
+  const body = {
+    [attribute]: value,
+  };
+  return matrix_admin_api
+    .put(`/_matrix/client/r0/profile/${user_id}/${attribute}`, body)
+    .then(() => {
+      console.log(`${attribute} set for ${user_id}.`);
+    })
+    .catch(() => {}); // Fail silent // TODO: requests succeeds but response times out
+}
 
 // HELPER FUNCTIONS
 async function asyncForEach(array, callback) {

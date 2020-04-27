@@ -5,6 +5,8 @@
    "MATRIX_SYNC_USER_PASSWORD": "",
    "MATRIX_SYNC_USER_TOKEN": "",
    "MATRIX_SECRET": "",
+   "MATRIX_SYNC_USER_DISPLAYNAME": "HPI Schul-Cloud Sync-Bot",
+   "MATRIX_SYNC_USER_AVATAR_PATH": "./data/avatar.png",
    "RABBITMQ_URI": "amqp://localhost",
    "RABBIT_MQ_QUEUE": "matrix_sync_populated"
 }

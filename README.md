@@ -49,6 +49,16 @@ The following variables are available (`config/default.schema.json`):
       "type": "string",
       "description": "Shared secret for the Matrix server to generate access tokens. (optional - if MATRIX_SYNC_USER_PASSWORD or MATRIX_SYNC_USER_TOKEN are set)"
     },
+    "MATRIX_SYNC_USER_DISPLAYNAME": {
+      "type": "string",
+      "default": "HPI Schul-Cloud Sync-Bot",
+      "description": "Define a custom displayname to be set for the sync user"
+    },
+    "MATRIX_SYNC_USER_AVATAR_PATH": {
+      "type": "string",
+      "default": "./data/avatar.png",
+      "description": "Upload a custom avatar for the sync user"
+    },
     "RABBITMQ_URI": {
       "type": "string",
       "format": "uri",
