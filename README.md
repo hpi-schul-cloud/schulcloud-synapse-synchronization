@@ -94,6 +94,7 @@ the corresponding `MATRIX_SECRET` can be used instead.
       {
         "id": "0000dcfbfb5c7a3f00bf21ab",
         "name": "Mathe",
+        "description": "Kurs",
         "type": "course",
         "bidirectional": false,
         "is_moderator": false
@@ -101,6 +102,7 @@ the corresponding `MATRIX_SECRET` can be used instead.
       {
         "id": "5e1dba1eaa30ab4df47e11d2",
         "name": "Test Team",
+        "description": "Team",
         "type": "team",
         "bidirectional": false,
         "is_moderator": false

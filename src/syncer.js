@@ -19,8 +19,9 @@ async function syncUserWithMatrix(payload) {
     await asyncForEach(payload.rooms, async (room) => {
       const alias = `${room.type}_${room.id}`;
       const fq_alias = `%23${alias}:${MATRIX_SERVERNAME}`;
+      const topic = room.description || (room.type === 'team' && 'Team') || (room.type === 'course' && 'Kurs');
 
-      const room_matrix_id = await getOrCreateRoom(fq_alias, alias, room.name, payload.school.name);
+      const room_matrix_id = await getOrCreateRoom(fq_alias, alias, room.name, payload.school.name, topic);
       await joinUserToRoom(user_id, room_matrix_id);
 
       // check if exists and permissions levels are what we want
@@ -40,7 +41,7 @@ async function syncUserWithMatrix(payload) {
   // always join user (previous check can be implemented later)
   if (payload.school.has_allhands_channel) {
     const room_name = 'Ankündigungen';
-    const topic = `Ankündigungen der ${payload.school.name}`;
+    const topic = `${payload.school.name}`;
     const alias = `news_${payload.school.id}`;
     const fq_alias = `%23${alias}:${MATRIX_SERVERNAME}`;
 
@@ -59,7 +60,7 @@ async function syncUserWithMatrix(payload) {
   // Lehrerzimmer
   if (payload.user.is_school_teacher === true) {
     const room_name = 'Lehrerzimmer';
-    const topic = `Lehrerzimmer (${payload.school.name})`;
+    const topic = `${payload.school.name}`;
     const alias = `teachers_${payload.school.id}`;
     const fq_alias = `%23${alias}:${MATRIX_SERVERNAME}`;
 
