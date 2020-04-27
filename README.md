@@ -78,10 +78,13 @@ the corresponding `MATRIX_SECRET` can be used instead.
 ```json
 {
     "method": "adduser",
+    "welcome": {
+      "text": "Welcome to messenger"
+    },
     "school": {
       "id": "0000d186816abba584714c5f",
       "has_allhands_channel": true,
-      "name": "Paul-Gerhardt-Gymnasium",
+      "name": "Paul-Gerhardt-Gymnasium"
     },
     "user": {
       "id": "@sso_0000d224816abba584714c9c:matrix.server.com",
