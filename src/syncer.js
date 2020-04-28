@@ -8,6 +8,7 @@ const EVENT_DEFAULT_ALL = 0;
 const EVENT_DEFAULT_MOD_ONLY = 50;
 const POWER_LEVEL_USER = 0;
 const POWER_LEVEL_MOD = 50;
+const POWER_LEVEL_MANGE_MEMBERS = 70;
 const POWER_LEVEL_ADMIN = 100;
 
 module.exports = {
@@ -43,7 +44,7 @@ async function syncUserWithMatrix(payload) {
       const events_default = room.bidirectional ? EVENT_DEFAULT_ALL : EVENT_DEFAULT_MOD_ONLY;
       const room_state = await syncRoom(alias, room.name, topic, false, events_default);
 
-      const user_power_level = payload.user.is_school_teacher ? POWER_LEVEL_MOD : POWER_LEVEL_USER;
+      const user_power_level = room.is_moderator ? POWER_LEVEL_MOD : POWER_LEVEL_USER;
       await syncRoomMember(room_state, user_id, user_power_level);
     });
   }
@@ -216,7 +217,9 @@ async function syncRoom(alias, name, topic, is_direct, events_default) {
   await syncRoomState(room_state, 'm.room.guest_access', 'guest_access', 'forbidden');
 
   // check default power_levels invite ('m.room.power_levels')
-  await syncRoomState(room_state, 'm.room.power_levels', 'invite', 70);
+  await syncRoomState(room_state, 'm.room.power_levels', 'invite', POWER_LEVEL_MANGE_MEMBERS);
+  await syncRoomState(room_state, 'm.room.power_levels', 'ban', POWER_LEVEL_MANGE_MEMBERS);
+  await syncRoomState(room_state, 'm.room.power_levels', 'kick', POWER_LEVEL_MANGE_MEMBERS);
   await syncRoomState(room_state, 'm.room.power_levels', 'events_default', events_default);
 
   // set custom state to mark room as managed
