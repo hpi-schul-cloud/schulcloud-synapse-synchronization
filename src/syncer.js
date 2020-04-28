@@ -2,14 +2,12 @@ const {Configuration} = require('@schul-cloud/commons');
 const fs = require('fs');
 const matrix_admin_api = require('./matrixApi');
 
-const MATRIX_SERVERNAME = Configuration.get('MATRIX_SERVERNAME');
-
 const EVENT_DEFAULT_ALL = 0;
 const EVENT_DEFAULT_MOD_ONLY = 50;
 const POWER_LEVEL_USER = 0;
 const POWER_LEVEL_MOD = 50;
 const POWER_LEVEL_MANGE_MEMBERS = 70;
-const POWER_LEVEL_ADMIN = 100;
+// const POWER_LEVEL_ADMIN = 100; // should not be used because sync user requires a higher level to manage users
 
 module.exports = {
   syncUserWithMatrix,
@@ -19,6 +17,10 @@ module.exports = {
   createUser,
   syncRoom,
   syncRoomMember,
+  deleteRoom,
+  getRooms,
+  getUsers,
+  kickUser,
 };
 
 
@@ -56,10 +58,14 @@ async function syncUserWithMatrix(payload) {
     const alias = `news_${payload.school.id}`;
     const room_state = await syncRoom(alias, room_name, topic, false, EVENT_DEFAULT_MOD_ONLY);
 
-    const user_power_level = payload.user.is_school_admin ? POWER_LEVEL_ADMIN : POWER_LEVEL_USER;
+    const user_power_level = payload.user.is_school_admin ? POWER_LEVEL_MOD : POWER_LEVEL_USER;
     await syncRoomMember(room_state, user_id, user_power_level);
   } else {
-    // TODO: delete or block room if setting is changed
+    const alias = `news_${payload.school.id}`;
+    await getRoomByAlias(alias)
+      .then((room) => room.room_id)
+      .then(deleteRoom)
+      .catch(() => {}); // room does not exist
   }
 
   // Lehrerzimmer
@@ -255,7 +261,8 @@ async function getOrCreateRoom(alias, name, topic, is_direct) {
 }
 
 async function getRoomByAlias(alias) {
-  const server_alias = `%23${alias}:${MATRIX_SERVERNAME}`;
+  const servername = Configuration.get('MATRIX_SERVERNAME');
+  const server_alias = `%23${alias}:${servername}`;
   return matrix_admin_api
     .get(`/_matrix/client/r0/directory/room/${server_alias}`)
     .then((response) => response.data);
@@ -328,6 +335,78 @@ async function setProfile(user_id, attribute, value) {
     })
     .catch(() => {}); // Fail silent // TODO: requests succeeds but response times out
 }
+
+async function getRooms(options = {}) {
+  return matrix_admin_api
+    .get('/_synapse/admin/v1/rooms', options)
+    .then((response) => response.data)
+    .catch(logRequestError);
+}
+
+async function getUsers(options = {}) {
+  return matrix_admin_api
+    .get('/_synapse/admin/v2/users', options)
+    .then((response) => response.data)
+    .catch(logRequestError);
+}
+
+// Users can only be deactivated, the user_id will be blocked and can only be again activated in the database
+// async function deleteUser(user_id, erase = true) {
+//   return matrix_admin_api
+//     .post(`/_synapse/admin/v1/deactivate/${user_id}`, { erase })
+//     .then((response) => response.data)
+//     .catch(logRequestError);
+// }
+
+async function deleteRoom(room_id) {
+  const username = Configuration.get('MATRIX_SYNC_USER_NAME');
+  const servername = Configuration.get('MATRIX_SERVERNAME');
+  const sync_user_id = `@${username}:${servername}`;
+
+  // kick everybody
+  const reason = 'Room closed / Raum geschlossen';
+  const members = await getRoomMembers(room_id);
+  const membersToBeKicked = members.filter((member) => member.user_id !== sync_user_id && member.content.membership === 'join');
+  const promises = membersToBeKicked.map((member) => kickUser(room_id, member.user_id, reason));
+  await Promise.all(promises);
+  await kickUser(room_id, sync_user_id, reason);
+
+  // delete room
+  await pruneRoom(room_id);
+}
+
+async function getRoomMembers(room_id) {
+  // https://matrix.org/docs/spec/client_server/r0.5.0#get-matrix-client-r0-rooms-roomid-members
+  return matrix_admin_api
+    .get(`/_matrix/client/r0/rooms/${room_id}/members`)
+    .then((response) => response.data)
+    .then((data) => data.chunk)
+    .catch(logRequestError);
+}
+
+async function kickUser(room_id, user_id, reason = '') {
+  // kick: https://matrix.org/docs/spec/client_server/r0.5.0#post-matrix-client-r0-rooms-roomid-kick
+  const body = {
+    user_id,
+    reason,
+  };
+  return matrix_admin_api
+    .post(`/_matrix/client/r0/rooms/${room_id}/kick`, body)
+    .then((response) => response.data)
+    .catch(logRequestError);
+}
+
+async function pruneRoom(room_id) {
+  // https://github.com/matrix-org/synapse/blob/master/docs/admin_api/purge_room.md
+  const body = {
+    room_id,
+  };
+  return matrix_admin_api
+    .post('/_synapse/admin/v1/purge_room', body)
+    .then((response) => response.data)
+    .catch(logRequestError);
+}
+
 
 // HELPER FUNCTIONS
 async function asyncForEach(array, callback) {
