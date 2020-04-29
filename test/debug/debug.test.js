@@ -2,6 +2,7 @@ const {
   describe, it,
 } = require('mocha');
 const syncer = require('../../src/syncer');
+// const matrix_admin_api = require('../../src/matrixApi');
 
 describe('debug', function desc() {
   this.timeout(10000);
@@ -26,5 +27,20 @@ describe('debug', function desc() {
   it('getRooms', async () => {
     const rooms = await syncer.getRooms();
     console.log(rooms);
+  });
+
+  it('private Message', async () => {
+    const welcomeMessage = 'Hi\nHow are you?';
+
+    // create private room
+    const alias = 'test_room11';
+    const room_id = await syncer.syncDirectRoom(alias, 'Test Message', '', [''], true);
+
+    // send welcome message
+    const message = {
+      msgtype: 'm.text',
+      body: welcomeMessage,
+    };
+    return syncer.sendMessage(room_id, message);
   });
 });
