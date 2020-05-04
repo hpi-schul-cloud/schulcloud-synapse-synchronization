@@ -90,9 +90,11 @@ async function setupSyncUser() {
   const username = Configuration.get('MATRIX_SYNC_USER_NAME');
   const servername = Configuration.get('MATRIX_SERVERNAME');
   const matrixId = `@${username}:${servername}`;
+  console.log(`setupSyncUser ${matrixId}`);
 
   // set avatar
   const currentAvatar = await getProfile(matrixId, 'avatar_url');
+  console.log(`${matrixId} avatar: ${currentAvatar}`);
   if (!currentAvatar) {
     const content_uri = await uploadFile('avatar.png', './data/avatar.png', 'image/png');
     await setProfile(matrixId, 'avatar_url', content_uri);
@@ -100,6 +102,7 @@ async function setupSyncUser() {
 
   // set displayname
   const displayname = Configuration.get('MATRIX_SYNC_USER_DISPLAYNAME');
+  console.log(`${matrixId} displayname: ${displayname}`);
   const currentDisplayname = await getProfile(matrixId, 'displayname');
   if (displayname && currentDisplayname !== displayname) {
     await setProfile(matrixId, 'displayname', displayname);
@@ -404,12 +407,16 @@ async function setProfile(user_id, attribute, value) {
   const body = {
     [attribute]: value,
   };
+
   return matrix_admin_api
-    .put(`/_matrix/client/r0/profile/${user_id}/${attribute}`, body)
+    .put(`/_matrix/client/r0/profile/${user_id}/${attribute}`, body, { timeout: 100000 })
     .then(() => {
       console.log(`${attribute} set for ${user_id}.`);
     })
-    .catch(() => {}); // Fail silent // TODO: requests succeeds but response times out
+    .catch((err) => {
+      console.log(`Failed to set ${attribute} for ${user_id}.`);
+      console.warn(err);
+    });
 }
 
 async function getRooms(options = {}) {
