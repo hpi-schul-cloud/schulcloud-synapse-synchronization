@@ -29,6 +29,27 @@ describe('syncer', () => {
     it('user exists', () => {
       scope
         .get('/_synapse/admin/v2/users/test_id')
+        .reply(200, {
+          name: 'test_id',
+          displayname: 'test user',
+        });
+
+      const user = {
+        id: 'test_id',
+        name: 'test user',
+        email: 'test@test.com',
+      };
+      return syncer.getOrCreateUser(user);
+    });
+    it('user exists and update displayname', () => {
+      scope
+        .get('/_synapse/admin/v2/users/test_id')
+        .reply(200, {
+          name: 'test_id',
+          displayname: 'tester',
+        });
+      scope
+        .put('/_matrix/client/r0/profile/test_id/displayname')
         .reply(200, {});
 
       const user = {

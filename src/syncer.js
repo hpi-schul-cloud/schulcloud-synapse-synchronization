@@ -146,8 +146,15 @@ async function getOrCreateUser(user) {
   // Docu: https://github.com/matrix-org/synapse/blob/master/docs/admin_api/user_admin_api.rst#query-account
   return matrix_admin_api
     .get(`/_synapse/admin/v2/users/${user.id}`)
-    .then(() => {
+    .then((response) => response.data)
+    .then(async (data) => {
       console.log(`user ${user.id} found.`);
+
+      // check displayname
+      if (data.displayname !== user.name) {
+        await setProfile(user.id, 'displayname', user.name);
+      }
+
       return 'found';
     })
     .catch(() => {
