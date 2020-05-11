@@ -31,6 +31,8 @@ ENV NODE_ENV "production"
 COPY --from=base /app/config /usr/src/app/config/
 COPY --from=base /app/node_modules_production /usr/src/app/node_modules/
 COPY --from=base /app/src /usr/src/app/src/
+COPY --from=base /app/data /usr/src/app/data/
 COPY --from=base /app/index.js /usr/src/app
+COPY --from=base /app/package.json /usr/src/app
 
 CMD [ "node", "index.js" ]

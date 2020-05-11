@@ -1,117 +1,161 @@
 const {Configuration} = require('@schul-cloud/commons');
-const axios = require('axios');
+const fs = require('fs');
+const matrix_admin_api = require('./matrixApi');
 
-const MATRIX_URI = Configuration.get('MATRIX_URI');
-const MATRIX_SERVERNAME = Configuration.get('MATRIX_SERVERNAME');
-const MATRIX_SYNC_USER_TOKEN = Configuration.get('MATRIX_SYNC_USER_TOKEN');
+const EVENT_DEFAULT_ALL = 0;
+const EVENT_DEFAULT_MOD_ONLY = 50;
+const POWER_LEVEL_USER = 0;
+const POWER_LEVEL_MOD = 50;
+const POWER_LEVEL_MANGE_MEMBERS = 70;
+// const POWER_LEVEL_ADMIN = 100; // should not be used because sync user requires a higher level to manage users
 
 module.exports = {
   syncUserWithMatrix,
+  setupSyncUser,
 
   getOrCreateUser,
   createUser,
+  syncRoom,
+  syncRoomMember,
+  deleteRoom,
+  getRooms,
+  getUsers,
+  kickUser,
+  sendMessage,
+  syncDirectRoom,
 };
-
-// SETUP API
-const axios_matrix_admin_api = axios.create({
-  baseURL: MATRIX_URI,
-  timeout: 10000,
-  headers: {
-    Authorization: `Bearer ${MATRIX_SYNC_USER_TOKEN}`,
-  },
-});
-
-const matrix_admin_api = {
-  get: (first, second, third = null) => call('get', first, second, third),
-  put: (first, second, third) => call('put', first, second, third),
-  post: (first, second, third) => call('post', first, second, third),
-};
-
-function call(func, first, second, third) {
-  return axios_matrix_admin_api[func](first, second, third)
-    .catch(async (error) => {
-      if (error.response && error.response.status === 429) {
-        const timeToWait = error.response.data.retry_after_ms + 100;
-        console.warn(`Waiting for ${timeToWait}ms...`);
-        await sleep(timeToWait);
-        return matrix_admin_api[func](first, second, third);
-      }
-      throw error;
-    });
-}
 
 // PUBLIC FUNCTIONS
 async function syncUserWithMatrix(payload) {
   const user_id = payload.user.id;
-  await getOrCreateUser(payload.user);
+  const userFoundOrCreated = await getOrCreateUser(payload.user);
+
+  const welcomeMessage = getWelcomeMessage(payload);
+
+  if (userFoundOrCreated === 'created' && welcomeMessage) {
+    // create private room
+    const alias = `sync_${user_id.slice(5, 29)}`;
+    const room_id = await syncDirectRoom(alias, Configuration.get('MATRIX_SYNC_USER_DISPLAYNAME'), '', [user_id]);
+
+    // send welcome message
+    const message = {
+      msgtype: 'm.text',
+      body: welcomeMessage,
+    };
+    await sendMessage(room_id, message);
+  }
 
   if (payload.rooms) {
     await asyncForEach(payload.rooms, async (room) => {
       const alias = `${room.type}_${room.id}`;
-      const fq_alias = `%23${alias}:${MATRIX_SERVERNAME}`;
+      const topic = room.description || (room.type === 'team' && 'Team') || (room.type === 'course' && 'Kurs') || `Kanal für ${room.name} (${payload.school.name})`;
+      const events_default = room.bidirectional ? EVENT_DEFAULT_ALL : EVENT_DEFAULT_MOD_ONLY;
+      const room_state = await syncRoom(alias, room.name, topic, events_default);
 
-      const room_matrix_id = await getOrCreateRoom(fq_alias, alias, room.name, payload.school.name);
-      await joinUserToRoom(user_id, room_matrix_id);
-
-      // check if exists and permissions levels are what we want
-      let desiredUserPower = 50;
-      if (room.bidirectional === true) {
-        desiredUserPower = 0;
-      }
-
-      // this can run async
-      await Promise.all([
-        setRoomEventsDefault(room_matrix_id, desiredUserPower),
-        setModerator(room_matrix_id, payload.user.id, room.is_moderator),
-      ]);
+      const user_power_level = room.is_moderator ? POWER_LEVEL_MOD : POWER_LEVEL_USER;
+      await syncRoomMember(room_state, user_id, user_power_level);
     });
   }
 
   // always join user (previous check can be implemented later)
   if (payload.school.has_allhands_channel) {
     const room_name = 'Ankündigungen';
-    const topic = `Ankündigungen der ${payload.school.name}`;
+    const topic = `${payload.school.name}`;
     const alias = `news_${payload.school.id}`;
-    const fq_alias = `%23${alias}:${MATRIX_SERVERNAME}`;
+    const room_state = await syncRoom(alias, room_name, topic, EVENT_DEFAULT_MOD_ONLY);
 
-    const room_matrix_id = await getOrCreateRoom(fq_alias, alias, room_name, payload.school.name, topic);
-    const current_permission = payload.user.is_school_admin ? await getUserRoomLevel(room_matrix_id, payload.user.id) : null;
-    await setRoomEventsDefault(room_matrix_id, 50);
-    await joinUserToRoom(user_id, room_matrix_id);
-
-    if (payload.user.is_school_admin && current_permission !== 50) {
-      await setModerator(room_matrix_id, payload.user.id, true);
-    }
+    const user_power_level = payload.user.is_school_admin ? POWER_LEVEL_MOD : POWER_LEVEL_USER;
+    await syncRoomMember(room_state, user_id, user_power_level);
   } else {
-    // TODO: delete or block room if setting is changed
+    const alias = `news_${payload.school.id}`;
+    await getRoomByAlias(alias)
+      .then((room) => room.room_id)
+      .then(deleteRoom)
+      .catch(() => {}); // room does not exist
   }
 
   // Lehrerzimmer
-  if (payload.user.is_teacher === true) {
+  if (payload.user.is_school_teacher === true) {
     const room_name = 'Lehrerzimmer';
-    const topic = `Lehrerzimmer der ${payload.school.name}`;
+    const topic = `${payload.school.name}`;
     const alias = `teachers_${payload.school.id}`;
-    const fq_alias = `%23${alias}:${MATRIX_SERVERNAME}`;
+    const room_state = await syncRoom(alias, room_name, topic, EVENT_DEFAULT_ALL);
 
-    const room_matrix_id = await getOrCreateRoom(fq_alias, alias, room_name, payload.school.name, topic);
-    const current_permission = null;
-    // setRoomEventsDefault(room_matrix_id, 50);
-    await joinUserToRoom(user_id, room_matrix_id);
+    const user_power_level = payload.user.is_school_admin ? POWER_LEVEL_MOD : POWER_LEVEL_USER;
+    await syncRoomMember(room_state, user_id, user_power_level);
+  }
+}
 
-    if (payload.user.is_school_admin && current_permission !== 50) {
-      await setModerator(room_matrix_id, payload.user.id, true);
-    }
+async function setupSyncUser() {
+  const username = Configuration.get('MATRIX_SYNC_USER_NAME');
+  const servername = Configuration.get('MATRIX_SERVERNAME');
+  const matrixId = `@${username}:${servername}`;
+  console.log(`setupSyncUser ${matrixId}`);
+
+  // set avatar
+  const currentAvatar = await getProfile(matrixId, 'avatar_url');
+  console.log(`${matrixId} avatar: ${currentAvatar}`);
+  if (!currentAvatar) {
+    const content_uri = await uploadFile('avatar.png', './data/avatar.png', 'image/png');
+    await setProfile(matrixId, 'avatar_url', content_uri);
+  }
+
+  // set displayname
+  const displayname = Configuration.get('MATRIX_SYNC_USER_DISPLAYNAME');
+  console.log(`${matrixId} displayname: ${displayname}`);
+  const currentDisplayname = await getProfile(matrixId, 'displayname');
+  if (displayname && currentDisplayname !== displayname) {
+    await setProfile(matrixId, 'displayname', displayname);
   }
 }
 
 // INTERNAL FUNCTIONS
+function getWelcomeMessage(payload) {
+  let welcomeMessage;
+
+  if (payload.user.is_school_admin) {
+    welcomeMessage = Configuration.get('WELCOME_MESSAGE_ADMIN');
+  } else if (payload.user.is_school_teacher) {
+    welcomeMessage = Configuration.get('WELCOME_MESSAGE_TEACHER');
+  } else {
+    welcomeMessage = Configuration.get('WELCOME_MESSAGE_STUDENT');
+  }
+
+  if (payload.welcome && payload.welcome.text) {
+    welcomeMessage = payload.welcome.text;
+  }
+
+  if (welcomeMessage) {
+    welcomeMessage = welcomeMessage.replace(/\\n/g, '\n');
+  }
+
+  return welcomeMessage;
+}
+
+async function sendMessage(room_id, message) {
+  return matrix_admin_api
+    .post(`/_matrix/client/r0/rooms/${room_id}/send/m.room.message`, message)
+    .then(() => {
+      console.log('Message sent.');
+    })
+    .catch(logRequestError);
+}
+
 async function getOrCreateUser(user) {
   // check if user exists
   // Docu: https://github.com/matrix-org/synapse/blob/master/docs/admin_api/user_admin_api.rst#query-account
-  await matrix_admin_api
+  return matrix_admin_api
     .get(`/_synapse/admin/v2/users/${user.id}`)
-    .then(() => {
+    .then((response) => response.data)
+    .then(async (data) => {
       console.log(`user ${user.id} found.`);
+
+      // check displayname
+      if (data.displayname !== user.name) {
+        await setProfile(user.id, 'displayname', user.name);
+      }
+
+      return 'found';
     })
     .catch(() => {
       console.log(`user ${user.id} not there yet.`);
@@ -139,135 +183,322 @@ async function createUser(user) {
     .put(`/_synapse/admin/v2/users/${user.id}`, newUser)
     .then(() => {
       console.log(`user ${user.id} created.`);
+      return 'created';
     })
     .catch(logRequestError);
 }
 
-async function setRoomEventsDefault(room_matrix_id, events_default) {
-  const room_state = await getRoomState(room_matrix_id);
-  if (room_state && room_state.events_default !== events_default) {
-    room_state.events_default = events_default;
-    await matrix_admin_api
-      .put(`/_matrix/client/r0/rooms/${room_matrix_id}/state/m.room.power_levels`, room_state)
-      .catch(logRequestError);
+async function syncRoomMember(room_state, user_id, user_power_level) {
+  // is member?
+  const state_member = room_state.find((state) => (state.type === 'm.room.member' && state.user_id === user_id));
+  if (!state_member || state_member.content.membership === 'leave') {
+    await inviteUserToRoom(user_id, room_state[0].room_id);
+    await joinUserToRoom(user_id, room_state[0].room_id);
+  }
+
+  // is power level right?
+  const currentUserPowerLevel = getUserPowerLevel(room_state, user_id);
+  if (currentUserPowerLevel !== user_power_level) {
+    await setUserPowerLevel(room_state, user_id, user_power_level);
   }
 }
 
-async function joinUserToRoom(user_id, room_id) {
-  // TODO: Check if the user is already in the room to avoid reseting the user state
-
-  // Send invite
-  await matrix_admin_api
+async function inviteUserToRoom(user_id, room_id) {
+  return matrix_admin_api
     .post(`/_matrix/client/r0/rooms/${room_id}/invite`, {
       user_id,
     })
-    .then((response) => {
-      if (response.status === 200) {
-        console.log(`user ${user_id} invited ${room_id}`);
-      }
+    .then(() => {
+      console.log(`user ${user_id} invited ${room_id}`);
     })
-    .catch(() => {
-      // user may already be in the room
-    });
+    .catch(logRequestError);
+}
 
-  // Accept invite
+async function joinUserToRoom(user_id, room_id) {
   await matrix_admin_api
     .post(`/_synapse/admin/v1/join/${room_id}`, {
       user_id,
     })
-    .then((response) => {
-      if (response.status === 200) {
-        console.log(`user ${user_id} joined ${room_id}`);
-      }
+    .then(() => {
+      console.log(`user ${user_id} joined ${room_id}`);
     })
     .catch(logRequestError);
 }
 
-async function getOrCreateRoom(fq_alias, alias, room_name, school_name, topic = null) {
-  // get room id
-  return matrix_admin_api
-    .get(`/_matrix/client/r0/directory/room/${fq_alias}`)
-    .then((response) => {
-      console.log(`room ${response.data.room_id} found`);
-      return response.data.room_id;
-    })
-    .catch(async () => {
-      console.log(`room ${fq_alias} not found`);
-      return createRoom(alias, room_name, school_name, topic);
-    });
+function getUserPowerLevel(room_state, user_id) {
+  const state_power_levels = room_state.find((state) => (state.type === 'm.room.power_levels'));
+  return state_power_levels.content.users[user_id] || POWER_LEVEL_USER;
 }
 
-async function createRoom(alias, room_name, school_name, topic) {
+async function setUserPowerLevel(room_state, user_id, user_power_level) {
+  const state_power_levels = room_state.find((state) => (state.type === 'm.room.power_levels'));
+  state_power_levels.content.users[user_id] = user_power_level;
+  return setRoomState(state_power_levels.room_id, 'm.room.power_levels', state_power_levels.content);
+}
+
+async function syncDirectRoom(alias, name, topic, user_ids) {
+  const room_id = await getOrCreateDirectRoom(alias, name, topic, user_ids);
+  const room_state = await getRoomState(room_id);
+
+  // check name ('m.room.name')
+  await syncRoomState(room_state, 'm.room.name', 'name', name);
+
+  // check topic ('m.room.topic')
+  await syncRoomState(room_state, 'm.room.topic', 'topic', topic);
+
+  // check members
+  const promises = user_ids.map(async (user_id) => {
+    const state_member = room_state.find((state) => (state.type === 'm.room.member' && state.user_id === user_id));
+    if (state_member && state_member.content.membership === 'leave') {
+      return inviteUserToRoom(user_id, room_state[0].room_id);
+    }
+    return true;
+  });
+  await Promise.all(promises);
+
+  return room_id;
+}
+
+async function syncRoom(alias, name, topic, events_default) {
+  const room_id = await getOrCreateRoom(alias, name, topic);
+  const room_state = await getRoomState(room_id);
+
+  // check name ('m.room.name')
+  await syncRoomState(room_state, 'm.room.name', 'name', name);
+
+  // check topic ('m.room.topic')
+  await syncRoomState(room_state, 'm.room.topic', 'topic', topic);
+
+  // check join ('m.room.join_rules')
+  await syncRoomState(room_state, 'm.room.join_rules', 'join_rule', 'invite');
+
+  // check guest access ('m.room.guest_access')
+  await syncRoomState(room_state, 'm.room.guest_access', 'guest_access', 'forbidden');
+
+  // check default power_levels invite ('m.room.power_levels')
+  await syncRoomState(room_state, 'm.room.power_levels', 'invite', POWER_LEVEL_MANGE_MEMBERS);
+  await syncRoomState(room_state, 'm.room.power_levels', 'ban', POWER_LEVEL_MANGE_MEMBERS);
+  await syncRoomState(room_state, 'm.room.power_levels', 'kick', POWER_LEVEL_MANGE_MEMBERS);
+  await syncRoomState(room_state, 'm.room.power_levels', 'events_default', events_default);
+
+  // set custom state to mark room as managed
+  await syncRoomState(room_state, 'm.room.sync', 'mode', 'managed');
+
+  // 'm.room.history_visibility' = 'shared'
+
+  return room_state;
+}
+
+async function syncRoomState(room_state, type, key, value) {
+  let state_name = room_state.find((state) => state.type === type);
+
+  // init new state event
+  if (!state_name) {
+    state_name = {
+      room_id: room_state[0].room_id,
+      content: {},
+    };
+  }
+
+  // check if stat has to be updated
+  if (state_name.content[key] !== value) {
+    state_name.content[key] = value;
+    await setRoomState(state_name.room_id, type, state_name.content);
+  }
+}
+
+async function getOrCreateRoom(alias, name, topic) {
+  return getRoomByAlias(alias)
+    .then((room) => room.room_id)
+    .catch(() => createRoom(alias, name, topic));
+}
+
+async function getOrCreateDirectRoom(alias, name, topic, user_ids) {
+  return getRoomByAlias(alias)
+    .then((room) => room.room_id)
+    .catch(() => createDirectRoom(alias, name, topic, user_ids));
+}
+
+async function getRoomByAlias(alias) {
+  const servername = Configuration.get('MATRIX_SERVERNAME');
+  const server_alias = `%23${alias}:${servername}`;
   return matrix_admin_api
-    .post('/_matrix/client/r0/createRoom', {
-      preset: 'private_chat', // this allows guest, we might want to disallow this later
-      room_alias_name: alias,
-      name: room_name,
-      topic: topic || `Kanal für ${room_name} (${school_name})`,
-      creation_content: {},
-    })
-    .then(async (response) => {
-      const room_matrix_id = response.data.room_id;
-      const tmp_state = await getRoomState(room_matrix_id);
-      tmp_state.invite = 70;
-      await setRoomState(room_matrix_id, tmp_state);
-      return room_matrix_id;
+    .get(`/_matrix/client/r0/directory/room/${server_alias}`)
+    .then((response) => response.data);
+}
+
+async function createRoom(alias, name, topic) {
+  const body = {
+    preset: 'private_chat',
+    room_alias_name: alias,
+    name,
+    topic,
+    creation_content: {
+      'm.federate': false,
+    },
+    initial_state: [{type: 'm.room.guest_access', state_key: '', content: {guest_access: 'forbidden'}}],
+  };
+
+  return matrix_admin_api
+    .post('/_matrix/client/r0/createRoom', body)
+    .then((response) => response.data.room_id)
+    .catch(logRequestError);
+}
+
+async function createDirectRoom(alias, name, topic, user_ids) {
+  const body = {
+    preset: 'private_chat',
+    room_alias_name: alias,
+    visibility: 'private',
+    invite: user_ids,
+    name,
+    topic,
+    is_direct: true,
+    creation_content: {
+      'm.federate': false,
+    },
+    initial_state: [{type: 'm.room.guest_access', state_key: '', content: {guest_access: 'forbidden'}}],
+  };
+
+  return matrix_admin_api
+    .post('/_matrix/client/r0/createRoom', body)
+    .then((response) => response.data.room_id)
+    .then((room_id) => {
+      console.log(`Room ${alias} (${room_id}) created.`);
+      return room_id;
     })
     .catch(logRequestError);
 }
 
-async function getUserRoomLevel(room_matrix_id, user_id) {
-  return matrix_admin_api.get(`/_matrix/client/r0/rooms/${room_matrix_id}/state`)
-    .then((response) => {
-      if (response.status === 200) {
-        if (response.data && response.data.users && response.data.users[user_id]) {
-          return response.data.users[user_id];
-        }
-      }
-      return null;
-    })
-    .catch(logRequestError);
-}
-
-async function getRoomState(room_matrix_id) {
+async function getRoomState(room_id) {
   return matrix_admin_api
-    .get(`/_matrix/client/r0/rooms/${room_matrix_id}/state/m.room.power_levels`)
+    .get(`/_matrix/client/r0/rooms/${room_id}/state`)
     .then((response) => response.data)
     .catch(logRequestError);
 }
 
-async function setRoomState(room_matrix_id, room_state) {
+async function setRoomState(room_id, state_type, content) {
   return matrix_admin_api
-    .put(`/_matrix/client/r0/rooms/${room_matrix_id}/state/m.room.power_levels`, room_state)
+    .put(`/_matrix/client/r0/rooms/${room_id}/state/${state_type}`, content)
     .then(() => {
-      console.log(`set roomm state in ${room_matrix_id}`);
+      console.log(`set room state ${state_type} in ${room_id} to ${content}`);
       return true;
     })
     .catch(logRequestError);
 }
 
-async function setModerator(room_matrix_id, user_id, is_moderator) {
-  // check moderator
-  const room_state = await getRoomState(room_matrix_id);
-  if (is_moderator && room_state && room_state.users) {
-    if (!(room_state.users[user_id] && room_state.users[user_id] === 50)) {
-      room_state.users[user_id] = 50;
-      await setRoomState(room_matrix_id, room_state);
-    } else {
-      console.log('user is already a moderator');
-    }
-    // TODO: Delete moderator if value is false
-  } else if (room_state && room_state.user && room_state.users[user_id] && room_state.users[user_id] === 50) {
-    delete room_state.users[user_id];
-    await matrix_admin_api
-      .put(`/_matrix/client/r0/rooms/${room_matrix_id}/state/m.room.power_levels`, room_state)
-      .then((response) => {
-        console.log(response.data);
-      })
-      .catch(logRequestError);
-  }
+async function uploadFile(file_name, file_path, content_type) {
+  const request_config = {
+    headers: {
+      'content-type': content_type,
+    },
+  };
+
+  return matrix_admin_api
+    .post(`/_matrix/media/r0/upload?filename=${file_name}`, fs.createReadStream(file_path), request_config)
+    .then((response) => {
+      console.log(`File ${file_name} upladed.`);
+      return response.data.content_uri;
+    })
+    .catch(logRequestError);
 }
 
+async function getProfile(user_id, attribute) {
+  return matrix_admin_api
+    .get(`/_matrix/client/r0/profile/${user_id}/${attribute}`)
+    .then((response) => response.data[attribute])
+    .catch(logRequestError);
+}
+
+async function setProfile(user_id, attribute, value) {
+  const body = {
+    [attribute]: value,
+  };
+
+  return matrix_admin_api
+    .put(`/_matrix/client/r0/profile/${user_id}/${attribute}`, body, { timeout: 100000 })
+    .then(() => {
+      console.log(`${attribute} set for ${user_id}.`);
+    })
+    .catch((err) => {
+      console.log(`Failed to set ${attribute} for ${user_id}.`);
+      console.warn(err);
+    });
+}
+
+async function getRooms(options = {}) {
+  return matrix_admin_api
+    .get('/_synapse/admin/v1/rooms', options)
+    .then((response) => response.data)
+    .catch(logRequestError);
+}
+
+async function getUsers(options = {}) {
+  return matrix_admin_api
+    .get('/_synapse/admin/v2/users', options)
+    .then((response) => response.data)
+    .catch(logRequestError);
+}
+
+// Users can only be deactivated, the user_id will be blocked and can only be again activated in the database
+// async function deleteUser(user_id, erase = true) {
+//   return matrix_admin_api
+//     .post(`/_synapse/admin/v1/deactivate/${user_id}`, { erase })
+//     .then((response) => response.data)
+//     .catch(logRequestError);
+// }
+
+async function deleteRoom(room_id) {
+  const username = Configuration.get('MATRIX_SYNC_USER_NAME');
+  const servername = Configuration.get('MATRIX_SERVERNAME');
+  const sync_user_id = `@${username}:${servername}`;
+
+  // kick everybody
+  const reason = 'Room closed / Raum geschlossen';
+  const members = await getRoomMembers(room_id);
+  const membersToBeKicked = members.filter((member) => member.user_id !== sync_user_id && member.content.membership === 'join');
+  const promises = membersToBeKicked.map((member) => kickUser(room_id, member.user_id, reason));
+  await Promise.all(promises);
+  await kickUser(room_id, sync_user_id, reason);
+
+  // delete room
+  await pruneRoom(room_id);
+}
+
+async function getRoomMembers(room_id) {
+  // https://matrix.org/docs/spec/client_server/r0.5.0#get-matrix-client-r0-rooms-roomid-members
+  return matrix_admin_api
+    .get(`/_matrix/client/r0/rooms/${room_id}/members`)
+    .then((response) => response.data)
+    .then((data) => data.chunk)
+    .catch(logRequestError);
+}
+
+async function kickUser(room_id, user_id, reason = '') {
+  // kick: https://matrix.org/docs/spec/client_server/r0.5.0#post-matrix-client-r0-rooms-roomid-kick
+  const body = {
+    user_id,
+    reason,
+  };
+  return matrix_admin_api
+    .post(`/_matrix/client/r0/rooms/${room_id}/kick`, body)
+    .then((response) => response.data)
+    .catch(logRequestError);
+}
+
+async function pruneRoom(room_id) {
+  // https://github.com/matrix-org/synapse/blob/master/docs/admin_api/purge_room.md
+  const body = {
+    room_id,
+  };
+  return matrix_admin_api
+    .post('/_synapse/admin/v1/purge_room', body)
+    .then((response) => response.data)
+    .catch(logRequestError);
+}
+
+
+// HELPER FUNCTIONS
 async function asyncForEach(array, callback) {
   const promises = [];
   for (let index = 0; index < array.length; index += 1) {
@@ -276,14 +507,25 @@ async function asyncForEach(array, callback) {
   return Promise.all(promises);
 }
 
-// HELPER FUNCTIONS
 function logRequestError(error) {
-  console.error(error.response);
-  throw error;
-}
+  if (error.response) {
+    /*
+     * The request was made and the server responded with a
+     * status code that falls out of the range of 2xx
+     */
+    console.error(error.response.status, error.response.data, error.response.headers);
+  } else if (error.request) {
+    /*
+     * The request was made but no response was received, `error.request`
+     * is an instance of XMLHttpRequest in the browser and an instance
+     * of http.ClientRequest in Node.js
+     */
+    console.error(error.request);
+  } else {
+    // Something happened in setting up the request and triggered an Error
+    console.error('Error', error.message);
+  }
 
-function sleep(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
+  console.log('for request', error.config);
+  throw error;
 }
