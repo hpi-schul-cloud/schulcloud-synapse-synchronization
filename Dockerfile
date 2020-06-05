@@ -1,7 +1,14 @@
 ARG NODE_IMAGE_TAG="12.16.1-slim"
 
-# --- base ---------------------------------------------------------------------
-FROM node:${NODE_IMAGE_TAG} AS base
+# --- stage:builder ------------------------------------------------------------
+FROM node:${NODE_IMAGE_TAG} AS build
+
+ARG BUILD_BRANCH
+ARG BUILD_HASH
+
+LABEL build.stage="builder"
+LABEL build.branch="${BUILD_BRANCH}"
+LABEL build.hash="${BUILD_HASH}"
 
 WORKDIR /app
 
@@ -12,15 +19,29 @@ RUN set -x \
     && cp -R node_modules node_modules_production \
     && npm install
 
-# --- test ---------------------------------------------------------------------
-FROM base AS test
+# --- stage:test ---------------------------------------------------------------
+FROM build AS test
+
+ARG BUILD_BRANCH
+ARG BUILD_HASH
+
+LABEL build.stage="test"
+LABEL build.branch="${BUILD_BRANCH}"
+LABEL build.hash="${BUILD_HASH}"
 
 RUN set -x \
     && npm run lint \
     && npm run test
 
-# --- release ------------------------------------------------------------------
+# --- stage:release ------------------------------------------------------------
 FROM node:${NODE_IMAGE_TAG} AS release
+
+ARG BUILD_BRANCH
+ARG BUILD_HASH
+
+LABEL build.stage="release"
+LABEL build.branch="${BUILD_BRANCH}"
+LABEL build.hash="${BUILD_HASH}"
 
 USER node
 
@@ -28,11 +49,11 @@ WORKDIR /usr/src/app
 
 ENV NODE_ENV "production"
 
-COPY --from=base /app/config /usr/src/app/config/
-COPY --from=base /app/node_modules_production /usr/src/app/node_modules/
-COPY --from=base /app/src /usr/src/app/src/
-COPY --from=base /app/data /usr/src/app/data/
-COPY --from=base /app/index.js /usr/src/app
-COPY --from=base /app/package.json /usr/src/app
+COPY --from=build /app/config /usr/src/app/config/
+COPY --from=build /app/node_modules_production /usr/src/app/node_modules/
+COPY --from=build /app/src /usr/src/app/src/
+COPY --from=build /app/data /usr/src/app/data/
+COPY --from=build /app/index.js /usr/src/app
+COPY --from=build /app/package.json /usr/src/app
 
 CMD [ "node", "index.js" ]
