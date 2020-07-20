@@ -34,7 +34,8 @@ async function syncUserWithMatrix(payload) {
 
   if (userFoundOrCreated === 'created' && welcomeMessage) {
     // create private room
-    const alias = `sync_${user_id.slice(5, 29)}`;
+    let from = user_id.indexOf('_') !== -1 ? user_id.indexOf('_') + 1 : 1
+    const alias = `sync_${user_id.slice(from, user_id.indexOf(':'))}`;
     const room_id = await syncDirectRoom(alias, Configuration.get('MATRIX_SYNC_USER_DISPLAYNAME'), '', [user_id]);
 
     // send welcome message
