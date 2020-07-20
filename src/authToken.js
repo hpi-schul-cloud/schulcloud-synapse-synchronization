@@ -8,6 +8,7 @@ module.exports = {
   obtainAccessToken,
   getSyncUserToken,
   clearCache,
+  getUserToken,
 };
 
 function clearCache() {
@@ -59,4 +60,10 @@ function getSyncUserToken() {
     .then((authObject) => authObject.accessToken);
 
   return cached_sync_user_token;
+}
+
+function getUserToken(matrixId) {
+  const matrixUri = Configuration.get('MATRIX_URI');
+  const matrixSecret = Configuration.get('MATRIX_SECRET');
+  return obtainAccessToken(matrixId, matrixUri, generatePassword(matrixId, matrixSecret));
 }
