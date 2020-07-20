@@ -34,7 +34,7 @@ async function syncUserWithMatrix(payload) {
 
   if (userFoundOrCreated === 'created' && welcomeMessage) {
     // create private room
-    let from = user_id.indexOf('_') !== -1 ? user_id.indexOf('_') + 1 : 1
+    const from = user_id.indexOf('_') !== -1 ? user_id.indexOf('_') + 1 : 1;
     const alias = `sync_${user_id.slice(from, user_id.indexOf(':'))}`;
     const room_id = await syncDirectRoom(alias, Configuration.get('MATRIX_SYNC_USER_DISPLAYNAME'), '', [user_id]);
 
@@ -115,11 +115,11 @@ function getWelcomeMessage(payload) {
   let welcomeMessage;
 
   if (payload.user.is_school_admin) {
-    welcomeMessage = Configuration.get('WELCOME_MESSAGE_ADMIN');
+    welcomeMessage = Configuration.has('WELCOME_MESSAGE_ADMIN') ? Configuration.get('WELCOME_MESSAGE_ADMIN') : null;
   } else if (payload.user.is_school_teacher) {
-    welcomeMessage = Configuration.get('WELCOME_MESSAGE_TEACHER');
+    welcomeMessage = Configuration.has('WELCOME_MESSAGE_TEACHER') ? Configuration.get('WELCOME_MESSAGE_TEACHER') : null;
   } else {
-    welcomeMessage = Configuration.get('WELCOME_MESSAGE_STUDENT');
+    welcomeMessage = Configuration.has('WELCOME_MESSAGE_STUDENT') ? Configuration.get('WELCOME_MESSAGE_STUDENT') : null;
   }
 
   if (payload.welcome && payload.welcome.text) {

@@ -1,106 +1,10 @@
+const fs = require('fs');
+
+const {Configuration} = require('@schul-cloud/commons');
 const syncer = require('../../src/syncer');
+const authToken = require('../../src/authToken');
 
-// const listener = require('../../src/listener');
-// const schoolCloudSeed = [
-//   {
-//     method: 'adduser',
-//     school: {id: '0000d186816abba584714c5f', has_allhands_channel: true, name: 'Paul-Gerhardt-Gymnasium '},
-//     user: {
-//       id: '@sso_0000d213816abba584714c0a:matrix.stomt.com', name: 'Thorsten Test', email: 'admin@schul-cloud.org', is_school_admin: true, is_school_teacher: false,
-//     },
-//     rooms: [{
-//       id: '0000dcfbfb5c7a3f00bf21ab', name: 'Mathe', type: 'course', bidirectional: false, is_moderator: false,
-//     }],
-//   },
-//
-//   {
-//     method: 'adduser',
-//     school: {id: '0000d186816abba584714c5f', has_allhands_channel: true, name: 'Paul-Gerhardt-Gymnasium '},
-//     user: {
-//       id: '@sso_58b40278dac20e0645353e3a:matrix.stomt.com',
-//       name: 'Waldemar Wunderlich',
-//       email: 'waldemar.wunderlich@schul-cloud.org',
-//       is_school_admin: false,
-//       is_school_teacher: false,
-//     },
-//     rooms: [{
-//       id: '5e1dc275322ce040a850b14b', name: 'A-Team', type: 'team', bidirectional: false, is_moderator: false,
-//     }],
-//   },
-//
-//   {
-//     method: 'adduser',
-//     school: {id: '0000d186816abba584714c5f', has_allhands_channel: true, name: 'Paul-Gerhardt-Gymnasium '},
-//     user: {
-//       id: '@sso_0000d224816abba584714c9c:matrix.stomt.com', name: 'Marla Mathe', email: 'schueler@schul-cloud.org', is_school_admin: false, is_school_teacher: false,
-//     },
-//     rooms: [
-//       {
-//         id: '0000dcfbfb5c7a3f00bf21ab', name: 'Mathe', type: 'course', bidirectional: false, is_moderator: false,
-//       },
-//       {
-//         id: '5e1dba1eaa30ab4df47e11d2', name: 'Test Team', type: 'team', bidirectional: false, is_moderator: false,
-//       },
-//       {
-//         id: '5e1dc275322ce040a850b14b', name: 'A-Team', type: 'team', bidirectional: false, is_moderator: true,
-//       },
-//     ],
-//   },
-//
-//   {
-//     method: 'adduser',
-//     school: {id: '0000d186816abba584714c5f', has_allhands_channel: true, name: 'Paul-Gerhardt-Gymnasium '},
-//     user: {
-//       id: '@sso_0000d213816abba584714c0b:matrix.stomt.com', name: 'Janno Jura', email: 'janno.jura@schul-cloud.org', is_school_admin: true, is_school_teacher: false,
-//     },
-//     rooms: [{
-//       id: '5e1dba1eaa30ab4df47e11d2', name: 'Test Team', type: 'team', bidirectional: false, is_moderator: true,
-//     }],
-//   },
-//
-//   {
-//     method: 'adduser',
-//     school: {id: '0000d186816abba584714c5f', has_allhands_channel: true, name: 'Paul-Gerhardt-Gymnasium '},
-//     user: {
-//       id: '@sso_0000d231816abba584714c9e:matrix.stomt.com', name: 'Cord Carl', email: 'lehrer@schul-cloud.org', is_school_admin: false, is_school_teacher: true,
-//     },
-//     rooms: [
-//       {
-//         id: '0000dcfbfb5c7a3f00bf21ab', name: 'Mathe', type: 'course', bidirectional: false, is_moderator: true,
-//       },
-//       {
-//         id: '5e1dba1eaa30ab4df47e11d2', name: 'Test Team', type: 'team', bidirectional: false, is_moderator: true,
-//       },
-//       {
-//         id: '5e1dc275322ce040a850b14b', name: 'A-Team', type: 'team', bidirectional: false, is_moderator: true,
-//       },
-//     ],
-//   },
-//
-//   {
-//     method: 'adduser',
-//     school: {id: '0000d186816abba584714c5f', has_allhands_channel: true, name: 'Paul-Gerhardt-Gymnasium '},
-//     user: {
-//       id: '@sso_0000d231816abba584714c9c:matrix.stomt.com', name: 'Super Hero', email: 'superhero@schul-cloud.org', is_school_admin: false, is_school_teacher: false,
-//     },
-//     rooms: [],
-//   },
-// ];
-//
-// // run for dev testing
-// async function executeTests() {
-//   // direct
-//   for (const msg of schoolCloudSeed) {
-//     await syncer.syncUserWithMatrix(msg);
-//   }
-//
-//   // via listener
-//   for (const msg of schoolCloudSeed) {
-//     await listener.onMessage({content: JSON.stringify(msg)});
-//   }
-// }
-
-async function executeRandomizedTests(amount_users = 10, amount_rooms = 5) {
+async function executeRandomizedTests(amount_users = 10, amount_rooms = 5, max_rooms_per_users = 5) {
   const school = {
     id: randomString(20),
     has_allhands_channel: true,
@@ -108,9 +12,10 @@ async function executeRandomizedTests(amount_users = 10, amount_rooms = 5) {
   };
 
   const users = [];
+  const servername = Configuration.get('MATRIX_SERVERNAME');
   for (let i = 0; i < amount_users; i += 1) {
     users.push({
-      id: `@test_${randomString(10)}:matrix.stomt.com`,
+      id: `@test_${randomString(10)}:${servername}`,
       name: 'Random Test User',
       email: `${randomString(10)}@test.com`,
       is_school_admin: false,
@@ -124,7 +29,7 @@ async function executeRandomizedTests(amount_users = 10, amount_rooms = 5) {
       id: `${randomString(10)}`,
       name: 'Random Room',
       type: 'course',
-      bidirectional: false,
+      bidirectional: true,
       is_moderator: false,
     });
   }
@@ -136,7 +41,7 @@ async function executeRandomizedTests(amount_users = 10, amount_rooms = 5) {
       user,
       rooms: [],
     };
-    const amount_rooms_for_user = Math.random() * 5;
+    const amount_rooms_for_user = Math.random() * max_rooms_per_users;
 
     while (msg.rooms.length < amount_rooms_for_user) {
       const roomIndex = Math.floor(Math.random() * rooms.length);
@@ -150,6 +55,9 @@ async function executeRandomizedTests(amount_users = 10, amount_rooms = 5) {
     // eslint-disable-next-line no-await-in-loop
     await syncer.syncUserWithMatrix(msg).catch(console.error);
   }
+
+  // get users with tokens
+  await getUserTokens(users);
 }
 
 function randomString(length) {
@@ -164,7 +72,25 @@ function randomString(length) {
   return result;
 }
 
-executeRandomizedTests(5, 5)
+async function getUserTokens(users) {
+  // get users with tokens
+  const result = [];
+
+  // eslint-disable-next-line  no-restricted-syntax
+  for (const user of users) {
+    // eslint-disable-next-line no-await-in-loop
+    await authToken.getUserToken(user.id)
+      .then((token) => {
+        result.push(token);
+      })
+      .catch(console.log);
+  }
+
+  fs.writeFileSync('users.json', JSON.stringify(result));
+  return result;
+}
+
+executeRandomizedTests(200, 100, 15)
   .then(() => {
     console.log('DONE');
   });
