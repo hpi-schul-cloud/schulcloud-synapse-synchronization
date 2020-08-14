@@ -24,6 +24,15 @@ describe('debug', function desc() {
 
   it('kickUser', () => syncer.kickUser('', '', ''));
 
+  it('getOrCreateUser', () => syncer.getOrCreateUser({id: '@sso_:test.messenger.schule', name: 'Test Sync'}))
+
+  it('getUsers', async () => {
+    const users = await syncer.getUsers();
+    console.log(users);
+  })
+
+  it('deactivateUser', () => syncer.deactivateUser({id: '@user:test.messenger.schule'}))
+
   it('getRooms', async () => {
     const rooms = await syncer.getRooms();
     console.log(rooms);

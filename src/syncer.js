@@ -23,6 +23,7 @@ module.exports = {
   kickUser,
   sendMessage,
   syncDirectRoom,
+  deactivateUser,
 };
 
 // PUBLIC FUNCTIONS
@@ -142,6 +143,12 @@ async function sendMessage(room_id, message) {
     .catch(logRequestError);
 }
 
+async function deactivateUser(user) {
+  return matrix_admin_api
+    .post(`/_synapse/admin/v1/deactivate/${user.id}`, { "erase": true })
+    .then(console.log)
+    .catch(console.error);
+}
 async function getOrCreateUser(user) {
   // check if user exists
   // Docu: https://github.com/matrix-org/synapse/blob/master/docs/admin_api/user_admin_api.rst#query-account
