@@ -3,7 +3,7 @@
 This is for handling an incoming object that describes a user, his desired channel
 and permissions and then takes care of syncing this to the defined synapse server.
 The synchronization is unidirectional, changes on the matrix server are not
-propagated back to the Schul-Cloud.
+propagated back to the HPI Schul-Cloud.
 
 The code is based on: https://github.com/matrix-org/matrix-appservice-node
 
