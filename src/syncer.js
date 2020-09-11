@@ -318,7 +318,16 @@ async function syncRoomState(room_state, type, key, value) {
 async function getOrCreateRoom(alias, name, topic) {
   return getRoomByAlias(alias)
     .then((room) => room.room_id)
-    .catch(() => createRoom(alias, name, topic));
+    .catch(() => {
+      return createRoom(alias, name, topic)
+        .catch((err) => {
+          if (err.response.status === 400) {
+            // room was created already, try to access it again
+            return getOrCreateRoom(alias, name, topic);
+          }
+          throw err;
+      });
+    });
 }
 
 async function getOrCreateDirectRoom(alias, name, topic, user_ids) {
@@ -349,8 +358,7 @@ async function createRoom(alias, name, topic) {
 
   return matrix_admin_api
     .post('/_matrix/client/r0/createRoom', body)
-    .then((response) => response.data.room_id)
-    .catch(logRequestError);
+    .then((response) => response.data.room_id);
 }
 
 async function createDirectRoom(alias, name, topic, user_ids) {
@@ -375,7 +383,13 @@ async function createDirectRoom(alias, name, topic, user_ids) {
       console.log(`Room ${alias} (${room_id}) created.`);
       return room_id;
     })
-    .catch(logRequestError);
+    .catch((err) => {
+      if (err.response.status === 400) {
+        // room was created already, try to access it again
+        return createDirectRoom(alias, name, topic, user_ids);
+      }
+      throw err;
+    });
 }
 
 async function getRoomState(room_id) {
