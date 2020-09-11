@@ -41,5 +41,4 @@ function sleep(ms) {
   });
 }
 
-
 module.exports = matrix_admin_api;

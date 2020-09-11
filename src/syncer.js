@@ -517,7 +517,6 @@ async function pruneRoom(room_id) {
     .catch(logRequestError);
 }
 
-
 // HELPER FUNCTIONS
 async function asyncForEach(array, callback) {
   const promises = [];
