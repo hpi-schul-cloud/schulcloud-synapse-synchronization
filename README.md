@@ -17,7 +17,7 @@ Configure the variables defined in `/config/default.schema.json` in a local `.en
 The following variables are available (`config/default.schema.json`):
 ```json
 {
-  "title": "Schul-Cloud Synapse Synchronization Configuration",
+  "title": "HPI Schul-Cloud Synapse Synchronization Configuration",
   "type": "object",
   "properties": {
     "MATRIX_URI": {
