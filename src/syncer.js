@@ -145,7 +145,7 @@ async function sendMessage(room_id, message) {
 
 async function deactivateUser(user) {
   return matrix_admin_api
-    .post(`/_synapse/admin/v1/deactivate/${user.id}`, { "erase": true })
+    .post(`/_synapse/admin/v1/deactivate/${user.id}`, { erase: true })
     .then(console.log)
     .catch(console.error);
 }
@@ -318,16 +318,14 @@ async function syncRoomState(room_state, type, key, value) {
 async function getOrCreateRoom(alias, name, topic) {
   return getRoomByAlias(alias)
     .then((room) => room.room_id)
-    .catch(() => {
-      return createRoom(alias, name, topic)
-        .catch((err) => {
-          if (err.response.status === 400) {
-            // room was created already, try to access it again
-            return getOrCreateRoom(alias, name, topic);
-          }
-          throw err;
-      });
-    });
+    .catch(() => createRoom(alias, name, topic)
+      .catch((err) => {
+        if (err.response.status === 400) {
+          // room was created already, try to access it again
+          return getOrCreateRoom(alias, name, topic);
+        }
+        throw err;
+      }));
 }
 
 async function getOrCreateDirectRoom(alias, name, topic, user_ids) {
