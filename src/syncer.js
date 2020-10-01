@@ -1,4 +1,4 @@
-const {Configuration} = require('@schul-cloud/commons');
+const { Configuration } = require('@schul-cloud/commons');
 const fs = require('fs');
 const matrix_admin_api = require('./matrixApi');
 
@@ -73,7 +73,7 @@ async function syncUserWithMatrix(payload) {
     await getRoomByAlias(alias)
       .then((room) => room.room_id)
       .then(deleteRoom)
-      .catch(() => {}); // room does not exist
+      .catch(() => { }); // room does not exist
   }
 
   // Lehrerzimmer
@@ -351,7 +351,7 @@ async function createRoom(alias, name, topic) {
     creation_content: {
       'm.federate': false,
     },
-    initial_state: [{type: 'm.room.guest_access', state_key: '', content: {guest_access: 'forbidden'}}],
+    initial_state: [{ type: 'm.room.guest_access', state_key: '', content: { guest_access: 'forbidden' } }],
   };
 
   return matrix_admin_api
@@ -371,7 +371,7 @@ async function createDirectRoom(alias, name, topic, user_ids) {
     creation_content: {
       'm.federate': false,
     },
-    initial_state: [{type: 'm.room.guest_access', state_key: '', content: {guest_access: 'forbidden'}}],
+    initial_state: [{ type: 'm.room.guest_access', state_key: '', content: { guest_access: 'forbidden' } }],
   };
 
   return matrix_admin_api
@@ -408,14 +408,17 @@ async function setRoomState(room_id, state_type, content) {
 }
 
 async function uploadFile(file_name, file_path, content_type) {
+  const stat = fs.statSync(file_path);
+  const stream = fs.createReadStream(file_path);
   const request_config = {
     headers: {
-      'content-type': content_type,
+      'Content-Type': content_type,
+      'Content-Length': stat.size,
     },
   };
 
   return matrix_admin_api
-    .post(`/_matrix/media/r0/upload?filename=${file_name}`, fs.createReadStream(file_path), request_config)
+    .post(`/_matrix/media/r0/upload?filename=${file_name}`, stream, request_config)
     .then((response) => {
       console.log(`File ${file_name} upladed.`);
       return response.data.content_uri;
