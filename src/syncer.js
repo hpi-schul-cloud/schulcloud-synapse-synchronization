@@ -31,60 +31,33 @@ async function syncUserWithMatrix(payload) {
   const user_id = payload.user.id;
   const userFoundOrCreated = await getOrCreateUser(payload.user);
 
-  const welcomeMessage = getWelcomeMessage(payload);
+  if (payload.welcome) {
+    const welcomeMessage = getWelcomeMessage(payload);
+    if (userFoundOrCreated === 'created' && welcomeMessage) {
+      // create private room
+      const from = user_id.indexOf('_') !== -1 ? user_id.indexOf('_') + 1 : 1;
+      const alias = `sync_${user_id.slice(from, user_id.indexOf(':'))}`;
+      const room_id = await syncDirectRoom(alias, Configuration.get('MATRIX_SYNC_USER_DISPLAYNAME'), '', [user_id]);
 
-  if (userFoundOrCreated === 'created' && welcomeMessage) {
-    // create private room
-    const from = user_id.indexOf('_') !== -1 ? user_id.indexOf('_') + 1 : 1;
-    const alias = `sync_${user_id.slice(from, user_id.indexOf(':'))}`;
-    const room_id = await syncDirectRoom(alias, Configuration.get('MATRIX_SYNC_USER_DISPLAYNAME'), '', [user_id]);
-
-    // send welcome message
-    const message = {
-      msgtype: 'm.text',
-      body: welcomeMessage,
-    };
-    await sendMessage(room_id, message);
+      // send welcome message
+      const message = {
+        msgtype: 'm.text',
+        body: welcomeMessage,
+      };
+      await sendMessage(room_id, message);
+    }
   }
 
   if (payload.rooms) {
     await asyncForEach(payload.rooms, async (room) => {
       const alias = `${room.type}_${room.id}`;
-      const topic = room.description || (room.type === 'team' && 'Team') || (room.type === 'course' && 'Kurs') || `Kanal für ${room.name} (${payload.school.name})`;
+      const topic = room.description;
       const events_default = room.bidirectional ? EVENT_DEFAULT_ALL : EVENT_DEFAULT_MOD_ONLY;
       const room_state = await syncRoom(alias, room.name, topic, events_default);
 
       const user_power_level = room.is_moderator ? POWER_LEVEL_MOD : POWER_LEVEL_USER;
       await syncRoomMember(room_state, user_id, user_power_level);
     });
-  }
-
-  // always join user (previous check can be implemented later)
-  if (payload.school.has_allhands_channel) {
-    const room_name = 'Ankündigungen';
-    const topic = `${payload.school.name}`;
-    const alias = `news_${payload.school.id}`;
-    const room_state = await syncRoom(alias, room_name, topic, EVENT_DEFAULT_MOD_ONLY);
-
-    const user_power_level = payload.user.is_school_admin ? POWER_LEVEL_MOD : POWER_LEVEL_USER;
-    await syncRoomMember(room_state, user_id, user_power_level);
-  } else {
-    const alias = `news_${payload.school.id}`;
-    await getRoomByAlias(alias)
-      .then((room) => room.room_id)
-      .then(deleteRoom)
-      .catch(() => { }); // room does not exist
-  }
-
-  // Lehrerzimmer
-  if (payload.user.is_school_teacher === true) {
-    const room_name = 'Lehrerzimmer';
-    const topic = `${payload.school.name}`;
-    const alias = `teachers_${payload.school.id}`;
-    const room_state = await syncRoom(alias, room_name, topic, EVENT_DEFAULT_ALL);
-
-    const user_power_level = payload.user.is_school_admin ? POWER_LEVEL_MOD : POWER_LEVEL_USER;
-    await syncRoomMember(room_state, user_id, user_power_level);
   }
 }
 
@@ -98,7 +71,8 @@ async function setupSyncUser() {
   const currentAvatar = await getProfile(matrixId, 'avatar_url');
   console.log(`${matrixId} avatar: ${currentAvatar}`);
   if (!currentAvatar) {
-    const content_uri = await uploadFile('avatar.png', './data/avatar.png', 'image/png');
+    const avatar_path = Configuration.get('MATRIX_SYNC_USER_AVATAR_PATH');
+    const content_uri = await uploadFile('avatar.png', avatar_path, 'image/png');
     await setProfile(matrixId, 'avatar_url', content_uri);
   }
 
@@ -114,14 +88,6 @@ async function setupSyncUser() {
 // INTERNAL FUNCTIONS
 function getWelcomeMessage(payload) {
   let welcomeMessage;
-
-  if (payload.user.is_school_admin) {
-    welcomeMessage = Configuration.has('WELCOME_MESSAGE_ADMIN') ? Configuration.get('WELCOME_MESSAGE_ADMIN') : null;
-  } else if (payload.user.is_school_teacher) {
-    welcomeMessage = Configuration.has('WELCOME_MESSAGE_TEACHER') ? Configuration.get('WELCOME_MESSAGE_TEACHER') : null;
-  } else {
-    welcomeMessage = Configuration.has('WELCOME_MESSAGE_STUDENT') ? Configuration.get('WELCOME_MESSAGE_STUDENT') : null;
-  }
 
   if (payload.welcome && payload.welcome.text) {
     welcomeMessage = payload.welcome.text;
@@ -174,7 +140,7 @@ async function getOrCreateUser(user) {
 async function createUser(user) {
   // Docu: https://github.com/matrix-org/synapse/blob/master/docs/admin_api/user_admin_api.rst#create-or-modify-account
   const newUser = {
-    password: Math.random().toString(36), // we will never use this, password login should be disabled
+    password: user.password || Math.random().toString(36), // random password if login via password is not used
     displayname: user.name,
     threepids: [],
     admin: false,

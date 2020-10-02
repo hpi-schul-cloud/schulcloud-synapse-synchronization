@@ -1,16 +1,14 @@
 {
-  "title": "Schul-Cloud Synapse Synchronization Configuration",
+  "title": "Synapse Synchronization Configuration",
   "type": "object",
   "properties": {
     "MATRIX_URI": {
       "type": "string",
       "format": "uri",
-      "default": "https://matrix.messenger.schule",
       "description": "The URI of the matrix server"
     },
     "MATRIX_SERVERNAME": {
       "type": "string",
-      "default": "messenger.schule",
       "description": "The name of the matrix server"
     },
     "MATRIX_SYNC_USER_NAME": {
@@ -32,37 +30,35 @@
     },
     "MATRIX_SYNC_USER_DISPLAYNAME": {
       "type": "string",
-      "default": "HPI Schul-Cloud Sync-Bot",
+      "default": "Sync-Bot",
       "description": "Define a custom displayname to be set for the sync user"
     },
     "MATRIX_SYNC_USER_AVATAR_PATH": {
       "type": "string",
+      "pattern": ".*png$",
       "default": "./data/avatar.png",
       "description": "Upload a custom avatar for the sync user"
     },
     "RABBITMQ_URI": {
       "type": "string",
       "format": "uri",
-      "pattern":".*(?<!/)$",
-      "default": "amqp://192.168.99.100",
+      "pattern": ".*(?<!/)$",
+      "default": "amqp://localhost",
       "description": "The URI of the RabbitMQ / AMQP server"
     },
     "RABBIT_MQ_QUEUE": {
       "type": "string",
       "default": "matrix_sync_populated",
       "description": "The name of the RabbitMQ channel we listen to"
-    },
-    "WELCOME_MESSAGE_ADMIN": {
-      "type": "string",
-      "description": "Great new admin users with a personal message from the sync bot"
-    },
-    "WELCOME_MESSAGE_TEACHER": {
-      "type": "string",
-      "description": "Great new teacher users with a personal message from the sync bot"
-    },
-    "WELCOME_MESSAGE_STUDENT": {
-      "type": "string",
-      "description": "Great new student users with a personal message from the sync bot"
     }
-  }
+  },
+  "required": [
+    "MATRIX_URI",
+    "MATRIX_SERVERNAME",
+    "MATRIX_SYNC_USER_NAME",
+    "MATRIX_SYNC_USER_DISPLAYNAME",
+    "MATRIX_SYNC_USER_AVATAR_PATH",
+    "RABBITMQ_URI",
+    "RABBIT_MQ_QUEUE"
+  ]
 }

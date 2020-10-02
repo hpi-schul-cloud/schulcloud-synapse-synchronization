@@ -1,4 +1,4 @@
-const {Configuration} = require('@schul-cloud/commons');
+const { Configuration } = require('@schul-cloud/commons');
 const hmacSHA512 = require('crypto-js/hmac-sha512');
 const axios = require('axios');
 
@@ -39,10 +39,8 @@ function obtainAccessToken(userId, homeserverApiUri, password) {
 }
 
 function getSyncUserToken() {
-  const configured_sync_user_token = Configuration.get('MATRIX_SYNC_USER_TOKEN');
-
-  if (configured_sync_user_token) {
-    return Promise.resolve(configured_sync_user_token);
+  if (Configuration.has('MATRIX_SYNC_USER_TOKEN')) {
+    return Promise.resolve(Configuration.get('MATRIX_SYNC_USER_TOKEN'));
   }
 
   if (cached_sync_user_token) {
@@ -54,7 +52,7 @@ function getSyncUserToken() {
   const matrixId = `@${username}:${servername}`;
   const matrixUri = Configuration.get('MATRIX_URI');
   const matrixSecret = Configuration.get('MATRIX_SECRET');
-  const password = Configuration.get('MATRIX_SYNC_USER_PASSWORD') || generatePassword(matrixId, matrixSecret);
+  const password = Configuration.has('MATRIX_SYNC_USER_PASSWORD') ? Configuration.get('MATRIX_SYNC_USER_PASSWORD') : generatePassword(matrixId, matrixSecret);
 
   cached_sync_user_token = obtainAccessToken(matrixId, matrixUri, password)
     .then((authObject) => authObject.accessToken);

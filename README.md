@@ -17,18 +17,16 @@ Configure the variables defined in `/config/default.schema.json` in a local `.en
 The following variables are available (`config/default.schema.json`):
 ```json
 {
-  "title": "HPI Schul-Cloud Synapse Synchronization Configuration",
+  "title": "Synapse Synchronization Configuration",
   "type": "object",
   "properties": {
     "MATRIX_URI": {
       "type": "string",
       "format": "uri",
-      "default": "https://matrix.messenger.schule",
       "description": "The URI of the matrix server"
     },
     "MATRIX_SERVERNAME": {
       "type": "string",
-      "default": "messenger.schule",
       "description": "The name of the matrix server"
     },
     "MATRIX_SYNC_USER_NAME": {
@@ -42,7 +40,6 @@ The following variables are available (`config/default.schema.json`):
     },
     "MATRIX_SYNC_USER_TOKEN": {
       "type": "string",
-      "default": "",
       "description": "AccessToken of synchronization user which. (optional - if MATRIX_SYNC_USER_PASSWORD or MATRIX_SECRET are set)"
     },
     "MATRIX_SECRET": {
@@ -51,19 +48,20 @@ The following variables are available (`config/default.schema.json`):
     },
     "MATRIX_SYNC_USER_DISPLAYNAME": {
       "type": "string",
-      "default": "HPI Schul-Cloud Sync-Bot",
+      "default": "Sync-Bot",
       "description": "Define a custom displayname to be set for the sync user"
     },
     "MATRIX_SYNC_USER_AVATAR_PATH": {
       "type": "string",
+      "pattern": ".*png$",
       "default": "./data/avatar.png",
       "description": "Upload a custom avatar for the sync user"
     },
     "RABBITMQ_URI": {
       "type": "string",
       "format": "uri",
-      "pattern":".*(?<!/)$",
-      "default": "amqp://192.168.99.100",
+      "pattern": ".*(?<!/)$",
+      "default": "amqp://localhost",
       "description": "The URI of the RabbitMQ / AMQP server"
     },
     "RABBIT_MQ_QUEUE": {
@@ -71,7 +69,16 @@ The following variables are available (`config/default.schema.json`):
       "default": "matrix_sync_populated",
       "description": "The name of the RabbitMQ channel we listen to"
     }
-  }
+  },
+  "required": [
+    "MATRIX_URI",
+    "MATRIX_SERVERNAME",
+    "MATRIX_SYNC_USER_NAME",
+    "MATRIX_SYNC_USER_DISPLAYNAME",
+    "MATRIX_SYNC_USER_AVATAR_PATH",
+    "RABBITMQ_URI",
+    "RABBIT_MQ_QUEUE"
+  ]
 }
 ``` 
 
@@ -87,41 +94,27 @@ the corresponding `MATRIX_SECRET` can be used instead.
 
 ```json
 {
-    "method": "adduser",
-    "welcome": {
-      "text": "Welcome to messenger"
-    },
-    "school": {
-      "id": "0000d186816abba584714c5f",
-      "has_allhands_channel": true,
-      "name": "Paul-Gerhardt-Gymnasium"
-    },
-    "user": {
-      "id": "@sso_0000d224816abba584714c9c:matrix.server.com",
-      "name": "Marla Mathe",
-      "email": "schueler@schul-cloud.org",
-      "is_school_admin": false,
-      "is_school_teacher": false
-    },
-    "rooms": [
-      {
-        "id": "0000dcfbfb5c7a3f00bf21ab",
-        "name": "Mathe",
-        "description": "Kurs",
-        "type": "course",
-        "bidirectional": false,
-        "is_moderator": false
-      },
-      {
-        "id": "5e1dba1eaa30ab4df47e11d2",
-        "name": "Test Team",
-        "description": "Team",
-        "type": "team",
-        "bidirectional": false,
-        "is_moderator": false
-      }
-    ]
-  }
+  "method": "adduser",
+  "welcome": {
+    "text": "Welcome to messenger"
+  },
+  "user": {
+    "id": "@sso_0000d224816abba584714c9c:matrix.server.com",
+    "name": "Marla Mathe",
+    "email": "(optional) user@domain.com",
+    "password": "(optional)"
+  },
+  "rooms": [
+    {
+      "type": "(default: room) course",
+      "id": "0000dcfbfb5c7a3f00bf21ab",
+      "name": "Mathe",
+      "description": "Kurs",
+      "bidirectional": false,
+      "is_moderator": false
+    }
+  ]
+}
 ```
 
 ### 2. Sync
@@ -133,10 +126,6 @@ the corresponding `MATRIX_SECRET` can be used instead.
 Right now we should not kick out users of rooms they are in, because they can be added to new rooms via the chat interface.
 We also do not lower the users power level in a sync.
 
-
-## Open Questions:
-
-- TODO: Globale Lehrerzimmer: How to ensure invites are not resent to often -> we can not know if user already received invite and declined -> move to dedicated function?
 
 ## Container
 
