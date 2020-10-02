@@ -50,6 +50,7 @@ async function syncUserWithMatrix(payload) {
 
   if (payload.rooms) {
     await asyncForEach(payload.rooms, async (room) => {
+      room.type = room.type || 'room';
       const alias = `${room.type}_${room.id}`;
       const topic = room.description;
       const events_default = room.bidirectional ? EVENT_DEFAULT_ALL : EVENT_DEFAULT_MOD_ONLY;
