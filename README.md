@@ -15,6 +15,7 @@ Configure the variables defined in `/config/default.schema.json` in a local `.en
 `cp .env.sample .env` or by specifying them as process environment variables.
 
 The following variables are available (`config/default.schema.json`):
+
 ```json
 {
   "title": "Synapse Synchronization Configuration",
@@ -80,7 +81,7 @@ The following variables are available (`config/default.schema.json`):
     "RABBIT_MQ_QUEUE"
   ]
 }
-``` 
+```
 
 To authenticate the `MATRIX_SYNC_USER_NAME` against the synapse server, different authorization methods can be used.
 By configuring `MATRIX_SYNC_USER_PASSWORD` a simple password login is done.
@@ -99,21 +100,33 @@ the corresponding `MATRIX_SECRET` can be used instead.
     "text": "Welcome to messenger"
   },
   "user": {
-    "id": "@sso_0000d224816abba584714c9c:matrix.server.com",
-    "name": "Marla Mathe",
-    "email": "(optional) user@domain.com",
+    "id": "@someId:matrix.server.com",
+    "name": "Firstname Lastname",
+    "email": "(optional)",
     "password": "(optional)"
   },
   "rooms": [
     {
-      "type": "(default: room) course",
-      "id": "0000dcfbfb5c7a3f00bf21ab",
-      "name": "Mathe",
-      "description": "Kurs",
-      "bidirectional": false,
-      "is_moderator": false
+      "type": "(optional, default: 'room')",
+      "id": "Ab01234",
+      "name": "Room Name",
+      "description": "(optional)",
+      "bidirectional": "(optional, default: false)",
+      "is_moderator": "(optional, default: false)"
     }
   ]
+}
+```
+
+and
+
+```json
+{
+  "method": "removeRoom",
+  "room": {
+    "type": "(optional, default: 'room')",
+    "id": "Ab01234"
+  }
 }
 ```
 
@@ -126,18 +139,19 @@ the corresponding `MATRIX_SECRET` can be used instead.
 Right now we should not kick out users of rooms they are in, because they can be added to new rooms via the chat interface.
 We also do not lower the users power level in a sync.
 
-
 ## Container
 
 ### Build
 
 To build a default container image run the following code:
+
 ```
 make build
 ```
 
 To customize the build process set some environment variables (details see
 Makefile). For example set `DOCKER_IMAGE_TAG` to build a custom image tag:
+
 ```
 make build DOCKER_IMAGE_TAG="foo/bar:latest"
 ```
@@ -145,6 +159,7 @@ make build DOCKER_IMAGE_TAG="foo/bar:latest"
 ### Push
 
 To push a previously built default container image run the following code:
+
 ```
 make push
 ```
@@ -155,6 +170,7 @@ later for CI pipelines.**
 
 To customize the push process set some environment variables (details see
 Makefile). For example set `DOCKER_IMAGE_TAG` to push a custom image tag:
+
 ```
 make push DOCKER_IMAGE_TAG="foo/bar:latest"
 ```

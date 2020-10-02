@@ -70,7 +70,21 @@ async function onMessage(msg) {
   messageNumber += 1;
   const number = messageNumber;
   console.log(' [%i] Received %s', number, msg.content.toString());
-  await syncer.syncUserWithMatrix(JSON.parse(msg.content));
+  const message = JSON.parse(msg.content);
+
+  switch (message.method) {
+    case 'adduser':
+      await syncer.syncUserWithMatrix(message);
+      break;
+
+    case 'removeRoom':
+      await syncer.removeRoom(message);
+      break;
+
+    default:
+      console.warn(`No handler for message with method '${message.method}' found.`);
+  }
+
   console.log(' [%i] Done', number);
   return true;
 }

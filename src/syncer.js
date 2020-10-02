@@ -12,6 +12,7 @@ const POWER_LEVEL_MANGE_MEMBERS = 70;
 module.exports = {
   syncUserWithMatrix,
   setupSyncUser,
+  removeRoom,
 
   getOrCreateUser,
   createUser,
@@ -27,6 +28,17 @@ module.exports = {
 };
 
 // PUBLIC FUNCTIONS
+
+async function removeRoom(payload) {
+  const type = payload.room.type || 'room';
+  const alias = `${type}_${payload.room.id}`;
+  return getRoomByAlias(alias)
+    .then((room) => deleteRoom(room.room_id))
+    .catch(() => {
+      console.log('Room does not exist anymore.');
+    });
+}
+
 async function syncUserWithMatrix(payload) {
   const user_id = payload.user.id;
   const userFoundOrCreated = await getOrCreateUser(payload.user);
@@ -50,9 +62,9 @@ async function syncUserWithMatrix(payload) {
 
   if (payload.rooms) {
     await asyncForEach(payload.rooms, async (room) => {
-      room.type = room.type || 'room';
-      const alias = `${room.type}_${room.id}`;
-      const topic = room.description;
+      const type = room.type || 'room';
+      const alias = `${type}_${room.id}`;
+      const topic = room.description || '';
       const events_default = room.bidirectional ? EVENT_DEFAULT_ALL : EVENT_DEFAULT_MOD_ONLY;
       const room_state = await syncRoom(alias, room.name, topic, events_default);
 
