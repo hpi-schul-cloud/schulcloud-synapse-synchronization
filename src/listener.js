@@ -78,6 +78,10 @@ async function onMessage(msg) {
       await syncer.syncUserWithMatrix(message);
       break;
 
+    case 'removeuser':
+      await syncer.removeUser(message);
+      break;
+
     case 'addroom':
       await syncer.addRoom(message);
       break;

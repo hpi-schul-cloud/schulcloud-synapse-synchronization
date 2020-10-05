@@ -120,6 +120,15 @@ the corresponding `MATRIX_SECRET` can be used instead.
 
 ```json
 {
+  "method": "removeUser",
+  "user": {
+    "id": "@someId:matrix.server.com",
+  }
+}
+```
+
+```json
+{
   "method": "addRoom",
   "room": {
     "type": "(optional, default: 'room')",

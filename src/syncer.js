@@ -13,6 +13,7 @@ module.exports = {
   addRoom,
   removeRoom,
   syncUserWithMatrix,
+  removeUser,
   setupSyncUser,
 
   getOrCreateUser,
@@ -42,7 +43,8 @@ async function syncRoomMemberList(room_state, members) {
   // remove who is not member anymore
   const new_member_ids = members.map((member) => member.id);
   new_member_ids.push(getSyncUserMatrixId()); // add sync user
-  for (const state of room_state) {
+
+  room_state.forEach(async (state) => {
     if (state.type === 'm.room.member') {
       // TODO: check state_member.content.membership === 'leave'
       if (!new_member_ids.includes(state.user_id)) {
@@ -50,7 +52,7 @@ async function syncRoomMemberList(room_state, members) {
         await kickUser(room_state[0].room_id, state.user_id);
       }
     }
-  }
+  });
 
   // sync members
   await asyncForEach(members, async (member) => {
@@ -98,6 +100,10 @@ async function syncUserWithMatrix(payload) {
       await syncRoomMember(room_state, user_id, user_power_level);
     });
   }
+}
+
+async function removeUser(payload) {
+  return deactivateUser(payload.user);
 }
 
 function getSyncUserMatrixId() {
@@ -155,8 +161,10 @@ async function sendMessage(room_id, message) {
 async function deactivateUser(user) {
   return matrix_admin_api
     .post(`/_synapse/admin/v1/deactivate/${user.id}`, { erase: true })
-    .then(console.log)
-    .catch(console.error);
+    .then(() => {
+      console.log(`User ${user.id} deactivated.`);
+    })
+    .catch(logRequestError);
 }
 
 async function getOrCreateUser(user) {
@@ -278,7 +286,7 @@ async function syncDirectRoom(alias, name, topic, user_ids) {
 }
 
 async function syncRoom(room) {
-  const name = room.name;
+  const { name } = room;
   const type = room.type || 'room';
   const alias = `${type}_${room.id}`;
   const topic = room.description || '';
