@@ -1,4 +1,7 @@
 {
+  "MATRIX_URI": "http://localhost:8888",
+  "MATRIX_SERVERNAME": "matrix.servername",
+  "MATRIX_SECRET": "MATRIX_SECRET",
   "MATRIX_SYNC_USER_NAME": "sync",
   "MATRIX_SYNC_USER_AVATAR_PATH": "./data/avatar.png",
   "MATRIX_SYNC_USER_DISPLAYNAME": "Sync-Bot",
