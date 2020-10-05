@@ -51,7 +51,8 @@ function listen() {
           .then(() => {
             channel.ack(msg);
           })
-          .catch(() => {
+          .catch((err) => {
+            console.warn('Failed to handle message', msg, err);
             if (!msg.fields.redelivered) {
               // retry message
               channel.reject(msg, true);
@@ -72,12 +73,16 @@ async function onMessage(msg) {
   console.log(' [%i] Received %s', number, msg.content.toString());
   const message = JSON.parse(msg.content);
 
-  switch (message.method) {
+  switch (message.method.toLowerCase()) {
     case 'adduser':
       await syncer.syncUserWithMatrix(message);
       break;
 
-    case 'removeRoom':
+    case 'addroom':
+      await syncer.addRoom(message);
+      break;
+
+    case 'removeroom':
       await syncer.removeRoom(message);
       break;
 

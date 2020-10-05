@@ -95,7 +95,7 @@ the corresponding `MATRIX_SECRET` can be used instead.
 
 ```json
 {
-  "method": "adduser",
+  "method": "addUser",
   "welcome": {
     "text": "Welcome to messenger"
   },
@@ -118,7 +118,24 @@ the corresponding `MATRIX_SECRET` can be used instead.
 }
 ```
 
-and
+```json
+{
+  "method": "addRoom",
+  "room": {
+    "type": "(optional, default: 'room')",
+    "id": "Ab01234",
+    "name": "Room Name",
+    "description": "(optional)",
+    "bidirectional": "(optional, default: false)"
+  },
+  "members": [
+    {
+      "id": "@someId:matrix.server.com",
+      "is_moderator": "(optional, default: false)"
+    }
+  ]
+}
+```
 
 ```json
 {

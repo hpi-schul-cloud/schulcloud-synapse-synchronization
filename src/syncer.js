@@ -10,9 +10,10 @@ const POWER_LEVEL_MANGE_MEMBERS = 70;
 // const POWER_LEVEL_ADMIN = 100; // should not be used because sync user requires a higher level to manage users
 
 module.exports = {
+  addRoom,
+  removeRoom,
   syncUserWithMatrix,
   setupSyncUser,
-  removeRoom,
 
   getOrCreateUser,
   createUser,
@@ -28,6 +29,35 @@ module.exports = {
 };
 
 // PUBLIC FUNCTIONS
+
+async function addRoom(payload) {
+  // create room
+  const room_state = await syncRoom(payload.room);
+
+  // sync users
+  await syncRoomMemberList(room_state, payload.members);
+}
+
+async function syncRoomMemberList(room_state, members) {
+  // remove who is not member anymore
+  const new_member_ids = members.map((member) => member.id);
+  new_member_ids.push(getSyncUserMatrixId()); // add sync user
+  for (const state of room_state) {
+    if (state.type === 'm.room.member') {
+      // TODO: check state_member.content.membership === 'leave'
+      if (!new_member_ids.includes(state.user_id)) {
+        // remove member
+        await kickUser(room_state[0].room_id, state.user_id);
+      }
+    }
+  }
+
+  // sync members
+  await asyncForEach(members, async (member) => {
+    const user_power_level = member.is_moderator ? POWER_LEVEL_MOD : POWER_LEVEL_USER;
+    await syncRoomMember(room_state, member.id, user_power_level);
+  });
+}
 
 async function removeRoom(payload) {
   const type = payload.room.type || 'room';
@@ -62,11 +92,7 @@ async function syncUserWithMatrix(payload) {
 
   if (payload.rooms) {
     await asyncForEach(payload.rooms, async (room) => {
-      const type = room.type || 'room';
-      const alias = `${type}_${room.id}`;
-      const topic = room.description || '';
-      const events_default = room.bidirectional ? EVENT_DEFAULT_ALL : EVENT_DEFAULT_MOD_ONLY;
-      const room_state = await syncRoom(alias, room.name, topic, events_default);
+      const room_state = await syncRoom(room);
 
       const user_power_level = room.is_moderator ? POWER_LEVEL_MOD : POWER_LEVEL_USER;
       await syncRoomMember(room_state, user_id, user_power_level);
@@ -74,10 +100,14 @@ async function syncUserWithMatrix(payload) {
   }
 }
 
-async function setupSyncUser() {
+function getSyncUserMatrixId() {
   const username = Configuration.get('MATRIX_SYNC_USER_NAME');
   const servername = Configuration.get('MATRIX_SERVERNAME');
-  const matrixId = `@${username}:${servername}`;
+  return `@${username}:${servername}`;
+}
+
+async function setupSyncUser() {
+  const matrixId = getSyncUserMatrixId();
   console.log(`setupSyncUser ${matrixId}`);
 
   // set avatar
@@ -128,6 +158,7 @@ async function deactivateUser(user) {
     .then(console.log)
     .catch(console.error);
 }
+
 async function getOrCreateUser(user) {
   // check if user exists
   // Docu: https://github.com/matrix-org/synapse/blob/master/docs/admin_api/user_admin_api.rst#query-account
@@ -246,7 +277,13 @@ async function syncDirectRoom(alias, name, topic, user_ids) {
   return room_id;
 }
 
-async function syncRoom(alias, name, topic, events_default) {
+async function syncRoom(room) {
+  const name = room.name;
+  const type = room.type || 'room';
+  const alias = `${type}_${room.id}`;
+  const topic = room.description || '';
+  const events_default = room.bidirectional ? EVENT_DEFAULT_ALL : EVENT_DEFAULT_MOD_ONLY;
+
   const room_id = await getOrCreateRoom(alias, name, topic);
   const room_state = await getRoomState(room_id);
 
@@ -299,7 +336,7 @@ async function getOrCreateRoom(alias, name, topic) {
     .then((room) => room.room_id)
     .catch(() => createRoom(alias, name, topic)
       .catch((err) => {
-        if (err.response.status === 400) {
+        if (err.response && err.response.status === 400) {
           // room was created already, try to access it again
           return getOrCreateRoom(alias, name, topic);
         }
