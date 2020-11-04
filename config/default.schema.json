@@ -1,5 +1,5 @@
 {
-  "title": "Schul-Cloud Synapse Synchronization Configuration",
+  "title": "HPI Schul-Cloud Synapse Synchronization Configuration",
   "type": "object",
   "properties": {
 		"MATRIX_MESSENGER": {
