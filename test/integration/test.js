@@ -12,7 +12,7 @@ async function executeRandomizedTests(amount_users = 10, amount_rooms = 5, max_r
   };
 
   const users = [];
-  const servername = Configuration.get('MATRIX_SERVERNAME');
+  const servername = Configuration.get('MATRIX_MESSENGER__SERVERNAME');
   for (let i = 0; i < amount_users; i += 1) {
     users.push({
       id: `@test_${randomString(10)}:${servername}`,

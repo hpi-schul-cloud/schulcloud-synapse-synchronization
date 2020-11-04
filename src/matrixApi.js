@@ -2,7 +2,7 @@ const {Configuration} = require('@schul-cloud/commons');
 const axios = require('axios');
 const authToken = require('./authToken');
 
-const MATRIX_URI = Configuration.get('MATRIX_URI');
+const MATRIX_URI = Configuration.get('MATRIX_MESSENGER__URI');
 
 // SETUP API
 const axios_matrix_admin_api = axios.create({

@@ -17,47 +17,55 @@ Configure the variables defined in `/config/default.schema.json` in a local `.en
 The following variables are available (`config/default.schema.json`):
 ```json
 {
-  "title": "HPI Schul-Cloud Synapse Synchronization Configuration",
+  "title": "Schul-Cloud Synapse Synchronization Configuration",
   "type": "object",
   "properties": {
-    "MATRIX_URI": {
-      "type": "string",
-      "format": "uri",
-      "default": "https://matrix.messenger.schule",
-      "description": "The URI of the matrix server"
-    },
-    "MATRIX_SERVERNAME": {
-      "type": "string",
-      "default": "messenger.schule",
-      "description": "The name of the matrix server"
-    },
-    "MATRIX_SYNC_USER_NAME": {
-      "type": "string",
-      "default": "sync",
-      "description": "Name of admin user to manage the server."
-    },
-    "MATRIX_SYNC_USER_PASSWORD": {
-      "type": "string",
-      "description": "Shared secret for the Matrix server to generate access tokens. (optional - if MATRIX_SYNC_USER_TOKEN or MATRIX_SECRET are set)"
-    },
-    "MATRIX_SYNC_USER_TOKEN": {
-      "type": "string",
-      "default": "",
-      "description": "AccessToken of synchronization user which. (optional - if MATRIX_SYNC_USER_PASSWORD or MATRIX_SECRET are set)"
-    },
-    "MATRIX_SECRET": {
-      "type": "string",
-      "description": "Shared secret for the Matrix server to generate access tokens. (optional - if MATRIX_SYNC_USER_PASSWORD or MATRIX_SYNC_USER_TOKEN are set)"
-    },
-    "MATRIX_SYNC_USER_DISPLAYNAME": {
-      "type": "string",
-      "default": "HPI Schul-Cloud Sync-Bot",
-      "description": "Define a custom displayname to be set for the sync user"
-    },
-    "MATRIX_SYNC_USER_AVATAR_PATH": {
-      "type": "string",
-      "default": "./data/avatar.png",
-      "description": "Upload a custom avatar for the sync user"
+		"MATRIX_MESSENGER": {
+			"type": "object",
+			"description": "Matrix messenger properties, required always to be defined",
+			"required": [
+				"URI",
+				"SERVERNAME",
+				"SECRET",
+			],
+			"properties": {
+				"URI": {
+					"type": "string",
+					"format": "uri",
+					"description": "The URI of the Matrix Messenger server."
+				},
+				"SERVERNAME": {
+					"type": "string",
+					"description": "Servername of the Matrix Messenger server."
+				},
+				"SECRET": {
+					"type": "string",
+					"description": "Shared secret for the Matrix server."
+				},
+        "SYNC_USER_NAME": {
+          "type": "string",
+          "default": "sync",
+          "description": "Name of admin user to manage the server."
+        },
+        "SYNC_USER_PASSWORD": {
+          "type": "string",
+          "description": "Shared secret for the Matrix server to generate access tokens. (optional - if MATRIX_SYNC_USER_TOKEN or MATRIX_SECRET are set)"
+        },
+        "SYNC_USER_TOKEN": {
+          "type": "string",
+          "description": "AccessToken of synchronization user which. (optional - if MATRIX_SYNC_USER_PASSWORD or MATRIX_SECRET are set)"
+        },
+        "SYNC_USER_DISPLAYNAME": {
+          "type": "string",
+          "default": "Sync-Bot",
+          "description": "Define a custom displayname to be set for the sync user"
+        },
+        "SYNC_USER_AVATAR_PATH": {
+          "type": "string",
+          "default": "./data/avatar.png",
+          "description": "Upload a custom avatar for the sync user"
+        }
+      }
     },
     "RABBITMQ_URI": {
       "type": "string",
@@ -66,13 +74,26 @@ The following variables are available (`config/default.schema.json`):
       "default": "amqp://192.168.99.100",
       "description": "The URI of the RabbitMQ / AMQP server"
     },
-    "RABBIT_MQ_QUEUE": {
+    "RABBITMQ_MATRIX_QUEUE_EXTERNAL": {
       "type": "string",
       "default": "matrix_sync_populated",
       "description": "The name of the RabbitMQ channel we listen to"
+    },
+    "WELCOME_MESSAGE_ADMIN": {
+      "type": "string",
+      "description": "Great new admin users with a personal message from the sync bot"
+    },
+    "WELCOME_MESSAGE_TEACHER": {
+      "type": "string",
+      "description": "Great new teacher users with a personal message from the sync bot"
+    },
+    "WELCOME_MESSAGE_STUDENT": {
+      "type": "string",
+      "description": "Great new student users with a personal message from the sync bot"
     }
   }
 }
+
 ``` 
 
 To authenticate the `MATRIX_SYNC_USER_NAME` against the synapse server, different authorization methods can be used.

@@ -39,7 +39,7 @@ function obtainAccessToken(userId, homeserverApiUri, password) {
 }
 
 function getSyncUserToken() {
-  const configured_sync_user_token = Configuration.get('MATRIX_SYNC_USER_TOKEN');
+  const configured_sync_user_token = Configuration.get('MATRIX_MESSENGER__SYNC_USER_TOKEN');
 
   if (configured_sync_user_token) {
     return Promise.resolve(configured_sync_user_token);
@@ -49,12 +49,12 @@ function getSyncUserToken() {
     return Promise.resolve(cached_sync_user_token);
   }
 
-  const username = Configuration.get('MATRIX_SYNC_USER_NAME');
-  const servername = Configuration.get('MATRIX_SERVERNAME');
+  const username = Configuration.get('MATRIX_MESSENGER__SYNC_USER_NAME');
+  const servername = Configuration.get('MATRIX_MESSENGER__SERVERNAME');
   const matrixId = `@${username}:${servername}`;
-  const matrixUri = Configuration.get('MATRIX_URI');
-  const matrixSecret = Configuration.get('MATRIX_SECRET');
-  const password = Configuration.get('MATRIX_SYNC_USER_PASSWORD') || generatePassword(matrixId, matrixSecret);
+  const matrixUri = Configuration.get('MATRIX_MESSENGER__URI');
+  const matrixSecret = Configuration.get('MATRIX_MESSENGER__SECRET');
+  const password = Configuration.get('MATRIX_MESSENGER__SYNC_USER_PASSWORD') || generatePassword(matrixId, matrixSecret);
 
   cached_sync_user_token = obtainAccessToken(matrixId, matrixUri, password)
     .then((authObject) => authObject.accessToken);
@@ -63,7 +63,7 @@ function getSyncUserToken() {
 }
 
 function getUserToken(matrixId) {
-  const matrixUri = Configuration.get('MATRIX_URI');
-  const matrixSecret = Configuration.get('MATRIX_SECRET');
+  const matrixUri = Configuration.get('MATRIX_MESSENGER__URI');
+  const matrixSecret = Configuration.get('MATRIX_MESSENGER__SECRET');
   return obtainAccessToken(matrixId, matrixUri, generatePassword(matrixId, matrixSecret));
 }
