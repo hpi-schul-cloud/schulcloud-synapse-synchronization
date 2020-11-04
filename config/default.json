@@ -1,12 +1,9 @@
 {
-   "MATRIX_MESSENGER__URI": "https://matrix.messenger.schule",
-   "MATRIX_MESSENGER__SERVERNAME": "messenger.schule",
-   "MATRIX_MESSENGER__SYNC_USER_NAME": "sync",
-   "MATRIX_MESSENGER__SYNC_USER_PASSWORD": "",
-   "MATRIX_MESSENGER__SYNC_USER_TOKEN": "",
-   "MATRIX_MESSENGER__SECRET": "",
-   "MATRIX_MESSENGER__SYNC_USER_DISPLAYNAME": "HPI Schul-Cloud Sync-Bot",
-   "MATRIX_MESSENGER__SYNC_USER_AVATAR_PATH": "./data/avatar.png",
-   "RABBITMQ_URI": "amqp://localhost",
-   "RABBITMQ_MATRIX_QUEUE_EXTERNAL": "matrix_sync_populated"
+  "MATRIX_MESSENGER": {
+    "SYNC_USER_NAME": "sync",
+    "SYNC_USER_DISPLAYNAME": "Sync-Bot",
+    "SYNC_USER_AVATAR_PATH": "./data/avatar.png"
+  },
+  "RABBITMQ_URI": "amqp://localhost",
+  "RABBITMQ_MATRIX_QUEUE_EXTERNAL": "matrix_sync_populated"
 }

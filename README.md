@@ -20,28 +20,27 @@ The following variables are available (`config/default.schema.json`):
   "title": "HPI Schul-Cloud Synapse Synchronization Configuration",
   "type": "object",
   "properties": {
-		"MATRIX_MESSENGER": {
-			"type": "object",
-			"description": "Matrix messenger properties, required always to be defined",
-			"required": [
-				"URI",
-				"SERVERNAME",
-				"SECRET",
-			],
-			"properties": {
-				"URI": {
-					"type": "string",
-					"format": "uri",
-					"description": "The URI of the Matrix Messenger server."
-				},
-				"SERVERNAME": {
-					"type": "string",
-					"description": "Servername of the Matrix Messenger server."
-				},
-				"SECRET": {
-					"type": "string",
-					"description": "Shared secret for the Matrix server."
-				},
+    "MATRIX_MESSENGER": {
+      "type": "object",
+      "description": "Matrix messenger properties, required always to be defined",
+      "required": [
+        "URI",
+        "SERVERNAME"
+      ],
+      "properties": {
+        "URI": {
+          "type": "string",
+          "format": "uri",
+          "description": "The URI of the Matrix Messenger server."
+        },
+        "SERVERNAME": {
+          "type": "string",
+          "description": "Servername of the Matrix Messenger server."
+        },
+        "SECRET": {
+          "type": "string",
+          "description": "Shared secret for the Matrix server."
+        },
         "SYNC_USER_NAME": {
           "type": "string",
           "default": "sync",
@@ -70,8 +69,8 @@ The following variables are available (`config/default.schema.json`):
     "RABBITMQ_URI": {
       "type": "string",
       "format": "uri",
-      "pattern":".*(?<!/)$",
-      "default": "amqp://192.168.99.100",
+      "pattern": ".*(?<!/)$",
+      "default": "amqp://localhost",
       "description": "The URI of the RabbitMQ / AMQP server"
     },
     "RABBITMQ_MATRIX_QUEUE_EXTERNAL": {
@@ -93,7 +92,6 @@ The following variables are available (`config/default.schema.json`):
     }
   }
 }
-
 ``` 
 
 To authenticate the `MATRIX_SYNC_USER_NAME` against the synapse server, different authorization methods can be used.

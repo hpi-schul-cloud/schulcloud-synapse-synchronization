@@ -7,8 +7,7 @@
       "description": "Matrix messenger properties, required always to be defined",
       "required": [
         "URI",
-        "SERVERNAME",
-        "SECRET"
+        "SERVERNAME"
       ],
       "properties": {
         "URI": {
@@ -53,7 +52,7 @@
       "type": "string",
       "format": "uri",
       "pattern": ".*(?<!/)$",
-      "default": "amqp://192.168.99.100",
+      "default": "amqp://localhost",
       "description": "The URI of the RabbitMQ / AMQP server"
     },
     "RABBITMQ_MATRIX_QUEUE_EXTERNAL": {

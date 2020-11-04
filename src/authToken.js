@@ -1,4 +1,4 @@
-const {Configuration} = require('@schul-cloud/commons');
+const { Configuration } = require('@schul-cloud/commons');
 const hmacSHA512 = require('crypto-js/hmac-sha512');
 const axios = require('axios');
 
@@ -39,10 +39,8 @@ function obtainAccessToken(userId, homeserverApiUri, password) {
 }
 
 function getSyncUserToken() {
-  const configured_sync_user_token = Configuration.get('MATRIX_MESSENGER__SYNC_USER_TOKEN');
-
-  if (configured_sync_user_token) {
-    return Promise.resolve(configured_sync_user_token);
+  if (Configuration.has('MATRIX_MESSENGER__SYNC_USER_TOKEN')) {
+    return Promise.resolve(Configuration.get('MATRIX_MESSENGER__SYNC_USER_TOKEN'));
   }
 
   if (cached_sync_user_token) {
@@ -53,8 +51,15 @@ function getSyncUserToken() {
   const servername = Configuration.get('MATRIX_MESSENGER__SERVERNAME');
   const matrixId = `@${username}:${servername}`;
   const matrixUri = Configuration.get('MATRIX_MESSENGER__URI');
-  const matrixSecret = Configuration.get('MATRIX_MESSENGER__SECRET');
-  const password = Configuration.get('MATRIX_MESSENGER__SYNC_USER_PASSWORD') || generatePassword(matrixId, matrixSecret);
+
+  let password = '';
+  if (Configuration.has('MATRIX_MESSENGER__SYNC_USER_PASSWORD')) {
+    password = Configuration.get('MATRIX_MESSENGER__SYNC_USER_PASSWORD');
+  } else if (Configuration.has('MATRIX_MESSENGER__SECRET')) {
+    password = generatePassword(matrixId, Configuration.get('MATRIX_MESSENGER__SECRET'));
+  } else {
+    throw Error('No Authentication Configuration given');
+  }
 
   cached_sync_user_token = obtainAccessToken(matrixId, matrixUri, password)
     .then((authObject) => authObject.accessToken);
