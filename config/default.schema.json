@@ -2,28 +2,28 @@
   "title": "Schul-Cloud Synapse Synchronization Configuration",
   "type": "object",
   "properties": {
-		"MATRIX_MESSENGER": {
-			"type": "object",
-			"description": "Matrix messenger properties, required always to be defined",
-			"required": [
-				"URI",
-				"SERVERNAME",
-				"SECRET",
-			],
-			"properties": {
-				"URI": {
-					"type": "string",
-					"format": "uri",
-					"description": "The URI of the Matrix Messenger server."
-				},
-				"SERVERNAME": {
-					"type": "string",
-					"description": "Servername of the Matrix Messenger server."
-				},
-				"SECRET": {
-					"type": "string",
-					"description": "Shared secret for the Matrix server."
-				},
+    "MATRIX_MESSENGER": {
+      "type": "object",
+      "description": "Matrix messenger properties, required always to be defined",
+      "required": [
+        "URI",
+        "SERVERNAME",
+        "SECRET"
+      ],
+      "properties": {
+        "URI": {
+          "type": "string",
+          "format": "uri",
+          "description": "The URI of the Matrix Messenger server."
+        },
+        "SERVERNAME": {
+          "type": "string",
+          "description": "Servername of the Matrix Messenger server."
+        },
+        "SECRET": {
+          "type": "string",
+          "description": "Shared secret for the Matrix server."
+        },
         "SYNC_USER_NAME": {
           "type": "string",
           "default": "sync",
@@ -52,7 +52,7 @@
     "RABBITMQ_URI": {
       "type": "string",
       "format": "uri",
-      "pattern":".*(?<!/)$",
+      "pattern": ".*(?<!/)$",
       "default": "amqp://192.168.99.100",
       "description": "The URI of the RabbitMQ / AMQP server"
     },
