@@ -12,4 +12,5 @@ Allowed Types of change: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `
 ### Added
 
  - OPS-1297 - Added Changelog github action
+ - SC-5476 - Rename configuration values to match server 
  

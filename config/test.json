@@ -1,0 +1,7 @@
+{
+  "MATRIX_MESSENGER": {
+    "URI": "http://fake.url",
+    "SERVERNAME": "fake.name",
+    "SYNC_USER_PASSWORD": ""
+  }
+}

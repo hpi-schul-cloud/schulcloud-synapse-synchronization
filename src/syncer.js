@@ -37,7 +37,7 @@ async function syncUserWithMatrix(payload) {
     // create private room
     const from = user_id.indexOf('_') !== -1 ? user_id.indexOf('_') + 1 : 1;
     const alias = `sync_${user_id.slice(from, user_id.indexOf(':'))}`;
-    const room_id = await syncDirectRoom(alias, Configuration.get('MATRIX_SYNC_USER_DISPLAYNAME'), '', [user_id]);
+    const room_id = await syncDirectRoom(alias, Configuration.get('MATRIX_MESSENGER__SYNC_USER_DISPLAYNAME'), '', [user_id]);
 
     // send welcome message
     const message = {
@@ -89,8 +89,8 @@ async function syncUserWithMatrix(payload) {
 }
 
 async function setupSyncUser() {
-  const username = Configuration.get('MATRIX_SYNC_USER_NAME');
-  const servername = Configuration.get('MATRIX_SERVERNAME');
+  const username = Configuration.get('MATRIX_MESSENGER__SYNC_USER_NAME');
+  const servername = Configuration.get('MATRIX_MESSENGER__SERVERNAME');
   const matrixId = `@${username}:${servername}`;
   console.log(`setupSyncUser ${matrixId}`);
 
@@ -103,7 +103,7 @@ async function setupSyncUser() {
   }
 
   // set displayname
-  const displayname = Configuration.get('MATRIX_SYNC_USER_DISPLAYNAME');
+  const displayname = Configuration.get('MATRIX_MESSENGER__SYNC_USER_DISPLAYNAME');
   console.log(`${matrixId} displayname: ${displayname}`);
   const currentDisplayname = await getProfile(matrixId, 'displayname');
   if (displayname && currentDisplayname !== displayname) {
@@ -335,7 +335,7 @@ async function getOrCreateDirectRoom(alias, name, topic, user_ids) {
 }
 
 async function getRoomByAlias(alias) {
-  const servername = Configuration.get('MATRIX_SERVERNAME');
+  const servername = Configuration.get('MATRIX_MESSENGER__SERVERNAME');
   const server_alias = `%23${alias}:${servername}`;
   return matrix_admin_api
     .get(`/_matrix/client/r0/directory/room/${server_alias}`)
@@ -469,8 +469,8 @@ async function getUsers(options = {}) {
 // }
 
 async function deleteRoom(room_id) {
-  const username = Configuration.get('MATRIX_SYNC_USER_NAME');
-  const servername = Configuration.get('MATRIX_SERVERNAME');
+  const username = Configuration.get('MATRIX_MESSENGER__SYNC_USER_NAME');
+  const servername = Configuration.get('MATRIX_MESSENGER__SERVERNAME');
   const sync_user_id = `@${username}:${servername}`;
 
   // kick everybody

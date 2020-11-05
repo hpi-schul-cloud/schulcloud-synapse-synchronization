@@ -1,4 +1,4 @@
-const {Configuration} = require('@schul-cloud/commons');
+const { Configuration } = require('@schul-cloud/commons');
 const {
   after, before, describe, it,
 } = require('mocha');
@@ -7,9 +7,9 @@ const assert = require('assert');
 const nock = require('nock');
 const authToken = require('../../src/authToken');
 
-const MATRIX_URI = Configuration.get('MATRIX_URI');
-const MATRIX_SERVERNAME = Configuration.get('MATRIX_SERVERNAME');
-const MATRIX_SYNC_USER_NAME = Configuration.get('MATRIX_SYNC_USER_NAME');
+const MATRIX_URI = Configuration.get('MATRIX_MESSENGER__URI');
+const MATRIX_SERVERNAME = Configuration.get('MATRIX_MESSENGER__SERVERNAME');
+const MATRIX_SYNC_USER_NAME = Configuration.get('MATRIX_MESSENGER__SYNC_USER_NAME');
 
 describe('authToken', () => {
   let scope;
@@ -48,7 +48,7 @@ describe('authToken', () => {
 
   describe('getSyncUserToken', () => {
     it('based on password', () => {
-      Configuration.set('MATRIX_SYNC_USER_PASSWORD', 'password');
+      Configuration.set('MATRIX_MESSENGER__SYNC_USER_PASSWORD', 'password');
       scope
         .post('/_matrix/client/r0/login', {
           type: 'm.login.password',
@@ -139,7 +139,7 @@ describe('authToken', () => {
     });
 
     it('from configuration', () => {
-      Configuration.set('MATRIX_SYNC_USER_TOKEN', 'syncToken');
+      Configuration.set('MATRIX_MESSENGER__SYNC_USER_TOKEN', 'syncToken');
 
       return authToken
         .getSyncUserToken()
