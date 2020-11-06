@@ -7,13 +7,13 @@ const {
 const nock = require('nock');
 const syncer = require('../../src/syncer');
 
-const MATRIX_URI = Configuration.get('MATRIX_URI');
+const MATRIX_URI = Configuration.get('MATRIX_MESSENGER__URI');
 
 describe('syncer', () => {
   let scope;
 
   before((done) => {
-    Configuration.set('MATRIX_SYNC_USER_TOKEN', 'token');
+    Configuration.set('MATRIX_MESSENGER__SYNC_USER_TOKEN', 'token');
     scope = nock(MATRIX_URI);
     done();
   });

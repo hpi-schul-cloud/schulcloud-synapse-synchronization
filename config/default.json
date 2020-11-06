@@ -1,10 +1,9 @@
 {
-  "MATRIX_URI": "http://localhost:8888",
-  "MATRIX_SERVERNAME": "matrix.servername",
-  "MATRIX_SECRET": "MATRIX_SECRET",
-  "MATRIX_SYNC_USER_NAME": "sync",
-  "MATRIX_SYNC_USER_AVATAR_PATH": "./data/avatar.png",
-  "MATRIX_SYNC_USER_DISPLAYNAME": "Sync-Bot",
+  "MATRIX_MESSENGER": {
+    "SYNC_USER_NAME": "sync",
+    "SYNC_USER_DISPLAYNAME": "Sync-Bot",
+    "SYNC_USER_AVATAR_PATH": "./data/avatar.png"
+  },
   "RABBITMQ_URI": "amqp://localhost",
-  "RABBIT_MQ_QUEUE": "matrix_sync_populated"
+  "RABBITMQ_MATRIX_QUEUE_EXTERNAL": "matrix_sync_populated"
 }

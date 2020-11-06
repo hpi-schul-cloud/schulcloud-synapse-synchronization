@@ -39,20 +39,27 @@ function obtainAccessToken(userId, homeserverApiUri, password) {
 }
 
 function getSyncUserToken() {
-  if (Configuration.has('MATRIX_SYNC_USER_TOKEN')) {
-    return Promise.resolve(Configuration.get('MATRIX_SYNC_USER_TOKEN'));
+  if (Configuration.has('MATRIX_MESSENGER__SYNC_USER_TOKEN')) {
+    return Promise.resolve(Configuration.get('MATRIX_MESSENGER__SYNC_USER_TOKEN'));
   }
 
   if (cached_sync_user_token) {
     return Promise.resolve(cached_sync_user_token);
   }
 
-  const username = Configuration.get('MATRIX_SYNC_USER_NAME');
-  const servername = Configuration.get('MATRIX_SERVERNAME');
+  const username = Configuration.get('MATRIX_MESSENGER__SYNC_USER_NAME');
+  const servername = Configuration.get('MATRIX_MESSENGER__SERVERNAME');
   const matrixId = `@${username}:${servername}`;
-  const matrixUri = Configuration.get('MATRIX_URI');
-  const matrixSecret = Configuration.get('MATRIX_SECRET');
-  const password = Configuration.has('MATRIX_SYNC_USER_PASSWORD') ? Configuration.get('MATRIX_SYNC_USER_PASSWORD') : generatePassword(matrixId, matrixSecret);
+  const matrixUri = Configuration.get('MATRIX_MESSENGER__URI');
+
+  let password = '';
+  if (Configuration.has('MATRIX_MESSENGER__SYNC_USER_PASSWORD')) {
+    password = Configuration.get('MATRIX_MESSENGER__SYNC_USER_PASSWORD');
+  } else if (Configuration.has('MATRIX_MESSENGER__SECRET')) {
+    password = generatePassword(matrixId, Configuration.get('MATRIX_MESSENGER__SECRET'));
+  } else {
+    throw Error('No Authentication Configuration given');
+  }
 
   cached_sync_user_token = obtainAccessToken(matrixId, matrixUri, password)
     .then((authObject) => authObject.accessToken);
@@ -61,7 +68,7 @@ function getSyncUserToken() {
 }
 
 function getUserToken(matrixId) {
-  const matrixUri = Configuration.get('MATRIX_URI');
-  const matrixSecret = Configuration.get('MATRIX_SECRET');
+  const matrixUri = Configuration.get('MATRIX_MESSENGER__URI');
+  const matrixSecret = Configuration.get('MATRIX_MESSENGER__SECRET');
   return obtainAccessToken(matrixId, matrixUri, generatePassword(matrixId, matrixSecret));
 }

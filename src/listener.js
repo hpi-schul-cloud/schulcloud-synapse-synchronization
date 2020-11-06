@@ -3,7 +3,7 @@ const amqp = require('amqplib/callback_api');
 const syncer = require('./syncer');
 
 const RABBITMQ_URI = Configuration.get('RABBITMQ_URI');
-const RABBIT_MQ_QUEUE = Configuration.get('RABBIT_MQ_QUEUE');
+const RABBIT_MQ_QUEUE = Configuration.get('RABBITMQ_MATRIX_QUEUE_EXTERNAL');
 const RABBIT_MQ_QUEUE_DEAD_LETTER = `${RABBIT_MQ_QUEUE}_dlq`;
 const CONCURRENCY = 1;
 

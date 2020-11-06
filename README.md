@@ -21,42 +21,51 @@ The following variables are available (`config/default.schema.json`):
   "title": "Synapse Synchronization Configuration",
   "type": "object",
   "properties": {
-    "MATRIX_URI": {
-      "type": "string",
-      "format": "uri",
-      "description": "The URI of the matrix server"
-    },
-    "MATRIX_SERVERNAME": {
-      "type": "string",
-      "description": "The name of the matrix server"
-    },
-    "MATRIX_SYNC_USER_NAME": {
-      "type": "string",
-      "default": "sync",
-      "description": "Name of admin user to manage the server."
-    },
-    "MATRIX_SYNC_USER_PASSWORD": {
-      "type": "string",
-      "description": "Shared secret for the Matrix server to generate access tokens. (optional - if MATRIX_SYNC_USER_TOKEN or MATRIX_SECRET are set)"
-    },
-    "MATRIX_SYNC_USER_TOKEN": {
-      "type": "string",
-      "description": "AccessToken of synchronization user which. (optional - if MATRIX_SYNC_USER_PASSWORD or MATRIX_SECRET are set)"
-    },
-    "MATRIX_SECRET": {
-      "type": "string",
-      "description": "Shared secret for the Matrix server to generate access tokens. (optional - if MATRIX_SYNC_USER_PASSWORD or MATRIX_SYNC_USER_TOKEN are set)"
-    },
-    "MATRIX_SYNC_USER_DISPLAYNAME": {
-      "type": "string",
-      "default": "Sync-Bot",
-      "description": "Define a custom displayname to be set for the sync user"
-    },
-    "MATRIX_SYNC_USER_AVATAR_PATH": {
-      "type": "string",
-      "pattern": ".*png$",
-      "default": "./data/avatar.png",
-      "description": "Upload a custom avatar for the sync user"
+    "MATRIX_MESSENGER": {
+      "type": "object",
+      "description": "Matrix messenger properties, required always to be defined",
+      "required": [
+        "URI",
+        "SERVERNAME"
+      ],
+      "properties": {
+        "URI": {
+          "type": "string",
+          "format": "uri",
+          "description": "The URI of the Matrix Messenger server."
+        },
+        "SERVERNAME": {
+          "type": "string",
+          "description": "Servername of the Matrix Messenger server."
+        },
+        "SECRET": {
+          "type": "string",
+          "description": "Shared secret for the Matrix server."
+        },
+        "SYNC_USER_NAME": {
+          "type": "string",
+          "default": "sync",
+          "description": "Name of admin user to manage the server."
+        },
+        "SYNC_USER_PASSWORD": {
+          "type": "string",
+          "description": "Shared secret for the Matrix server to generate access tokens. (optional - if MATRIX_SYNC_USER_TOKEN or MATRIX_SECRET are set)"
+        },
+        "SYNC_USER_TOKEN": {
+          "type": "string",
+          "description": "AccessToken of synchronization user which. (optional - if MATRIX_SYNC_USER_PASSWORD or MATRIX_SECRET are set)"
+        },
+        "SYNC_USER_DISPLAYNAME": {
+          "type": "string",
+          "default": "Sync-Bot",
+          "description": "Define a custom displayname to be set for the sync user"
+        },
+        "SYNC_USER_AVATAR_PATH": {
+          "type": "string",
+          "default": "./data/avatar.png",
+          "description": "Upload a custom avatar for the sync user"
+        }
+      }
     },
     "RABBITMQ_URI": {
       "type": "string",
@@ -65,29 +74,20 @@ The following variables are available (`config/default.schema.json`):
       "default": "amqp://localhost",
       "description": "The URI of the RabbitMQ / AMQP server"
     },
-    "RABBIT_MQ_QUEUE": {
+    "RABBITMQ_MATRIX_QUEUE_EXTERNAL": {
       "type": "string",
       "default": "matrix_sync_populated",
       "description": "The name of the RabbitMQ channel we listen to"
     }
-  },
-  "required": [
-    "MATRIX_URI",
-    "MATRIX_SERVERNAME",
-    "MATRIX_SYNC_USER_NAME",
-    "MATRIX_SYNC_USER_DISPLAYNAME",
-    "MATRIX_SYNC_USER_AVATAR_PATH",
-    "RABBITMQ_URI",
-    "RABBIT_MQ_QUEUE"
-  ]
+  }
 }
 ```
 
-To authenticate the `MATRIX_SYNC_USER_NAME` against the synapse server, different authorization methods can be used.
-By configuring `MATRIX_SYNC_USER_PASSWORD` a simple password login is done.
-Instead the accesstoken `MATRIX_SYNC_USER_TOKEN` can be passed directly (eg. if password login is disabled on the server).
+To authenticate the `MATRIX_MESSENGER__SYNC_USER_NAME` against the synapse server, different authorization methods can be used.
+By configuring `MATRIX_MESSENGER__SYNC_USER_PASSWORD` a simple password login is done.
+Instead the accesstoken `MATRIX_MESSENGER__SYNC_USER_TOKEN` can be passed directly (eg. if password login is disabled on the server).
 If the [Shared Secret Authenticator Module](https://github.com/devture/matrix-synapse-shared-secret-auth) is used
-the corresponding `MATRIX_SECRET` can be used instead.
+the corresponding `MATRIX_MESSENGER__SECRET` can be used instead.
 
 ## Logic
 
