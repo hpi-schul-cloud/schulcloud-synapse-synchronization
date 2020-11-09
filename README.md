@@ -200,3 +200,45 @@ Makefile). For example set `DOCKER_IMAGE_TAG` to push a custom image tag:
 ```
 make push DOCKER_IMAGE_TAG="foo/bar:latest"
 ```
+
+## Release
+
+To release this project first [choose the next version number](https://semver.org/), it will be in the formatt `X.Y.Z`.
+In the following replace X.Y.Z with the version you chose.
+
+1. Create a new Release branch
+    ```
+    git checkout -b release/X.Y.Z
+    ```
+
+1. Add a headline (`## [X.Y.Z]`) for the new version in the Changelog below the Unreleased headline
+
+1. Update the version in both `package.json` and `package-lock.json`
+
+1. Commit your changes
+    ```
+    git commit -am 'bump version to X.Y.Z'
+    ```
+
+1. Tag the new version
+    ```
+    git tag -a X.Y.Z
+    ```
+
+1. Merge the release
+    ```
+    git checkout master
+    git merge release/2.0.0
+    git checkout develop
+    git merge master
+    ```
+
+1. Cleanup
+    ```
+    git branch -d release/2.0.0
+    ```
+
+1. Push your changes
+    ```
+    git push origin master develop --tags
+    ```

@@ -9,6 +9,9 @@ Allowed Types of change: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `
 
 ## [Unreleased]
 
+### Added
+
+- Documented how to release the project
 
 ## [2.0.0]
 
