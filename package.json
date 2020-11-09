@@ -13,6 +13,7 @@
   },
   "scripts": {
     "start": "node index.js",
+    "startd": "nodemon index.js",
     "lint": "eslint ./src ./test index.js --ext .js",
     "lint:fix": "eslint ./src ./test index.js --ext .js --fix",
     "test": "npm run mocha --exit",
@@ -32,6 +33,7 @@
     "eslint-plugin-import": "^2.22.0",
     "mocha": "^8.1.3",
     "nock": "^13.0.4",
+    "nodemon": "^2.0.4",
     "nyc": "^15.1.0"
   }
 }

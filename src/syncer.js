@@ -1,4 +1,4 @@
-const {Configuration} = require('@schul-cloud/commons');
+const { Configuration } = require('@schul-cloud/commons');
 const fs = require('fs');
 const matrix_admin_api = require('./matrixApi');
 
@@ -10,7 +10,10 @@ const POWER_LEVEL_MANGE_MEMBERS = 70;
 // const POWER_LEVEL_ADMIN = 100; // should not be used because sync user requires a higher level to manage users
 
 module.exports = {
+  addRoom,
+  removeRoom,
   syncUserWithMatrix,
+  removeUser,
   setupSyncUser,
 
   getOrCreateUser,
@@ -27,78 +30,104 @@ module.exports = {
 };
 
 // PUBLIC FUNCTIONS
+
+async function addRoom(payload) {
+  // create room
+  const room_state = await syncRoom(payload.room);
+
+  // sync users
+  await syncRoomMemberList(room_state, payload.members);
+}
+
+async function syncRoomMemberList(room_state, members) {
+  // remove who is not member anymore
+  const new_member_ids = members.map((member) => member.id);
+  new_member_ids.push(getSyncUserMatrixId()); // add sync user
+
+  room_state.forEach(async (state) => {
+    if (state.type === 'm.room.member') {
+      // TODO: check state_member.content.membership === 'leave'
+      if (!new_member_ids.includes(state.user_id)) {
+        // remove member
+        await kickUser(room_state[0].room_id, state.user_id);
+      }
+    }
+  });
+
+  // sync members
+  await asyncForEach(members, async (member) => {
+    const user_power_level = member.is_moderator ? POWER_LEVEL_MOD : POWER_LEVEL_USER;
+    await syncRoomMember(room_state, member.id, user_power_level);
+  });
+}
+
+async function removeRoom(payload) {
+  const type = payload.room.type || 'room';
+  const alias = `${type}_${payload.room.id}`;
+  return getRoomByAlias(alias)
+    .then((room) => deleteRoom(room.room_id))
+    .catch(() => {
+      console.log('Room does not exist anymore.');
+    });
+}
+
 async function syncUserWithMatrix(payload) {
   const user_id = payload.user.id;
   const userFoundOrCreated = await getOrCreateUser(payload.user);
 
-  const welcomeMessage = getWelcomeMessage(payload);
+  if (payload.welcome) {
+    const welcomeMessage = getWelcomeMessage(payload);
+    if (userFoundOrCreated === 'created' && welcomeMessage) {
+      // create private room
+      const from = user_id.indexOf('_') !== -1 ? user_id.indexOf('_') + 1 : 1;
+      const alias = `sync_${user_id.slice(from, user_id.indexOf(':'))}`;
+      const room_id = await syncDirectRoom(alias, Configuration.get('MATRIX_MESSENGER__SYNC_USER_DISPLAYNAME'), '', [user_id]);
 
-  if (userFoundOrCreated === 'created' && welcomeMessage) {
-    // create private room
-    const from = user_id.indexOf('_') !== -1 ? user_id.indexOf('_') + 1 : 1;
-    const alias = `sync_${user_id.slice(from, user_id.indexOf(':'))}`;
-    const room_id = await syncDirectRoom(alias, Configuration.get('MATRIX_MESSENGER__SYNC_USER_DISPLAYNAME'), '', [user_id]);
-
-    // send welcome message
-    const message = {
-      msgtype: 'm.text',
-      body: welcomeMessage,
-    };
-    await sendMessage(room_id, message);
+      // send welcome message
+      const message = {
+        msgtype: 'm.text',
+        body: stripHtml(welcomeMessage),
+        format: 'org.matrix.custom.html',
+        formatted_body: welcomeMessage,
+      };
+      await sendMessage(room_id, message);
+    }
   }
 
   if (payload.rooms) {
     await asyncForEach(payload.rooms, async (room) => {
-      const alias = `${room.type}_${room.id}`;
-      const topic = room.description || (room.type === 'team' && 'Team') || (room.type === 'course' && 'Kurs') || `Kanal für ${room.name} (${payload.school.name})`;
-      const events_default = room.bidirectional ? EVENT_DEFAULT_ALL : EVENT_DEFAULT_MOD_ONLY;
-      const room_state = await syncRoom(alias, room.name, topic, events_default);
+      const room_state = await syncRoom(room);
 
       const user_power_level = room.is_moderator ? POWER_LEVEL_MOD : POWER_LEVEL_USER;
       await syncRoomMember(room_state, user_id, user_power_level);
     });
   }
+}
 
-  // always join user (previous check can be implemented later)
-  if (payload.school.has_allhands_channel) {
-    const room_name = 'Ankündigungen';
-    const topic = `${payload.school.name}`;
-    const alias = `news_${payload.school.id}`;
-    const room_state = await syncRoom(alias, room_name, topic, EVENT_DEFAULT_MOD_ONLY);
+function stripHtml(htmlString) {
+  return htmlString.replace(/(<([^>]+)>)/gi, '');
+}
 
-    const user_power_level = payload.user.is_school_admin ? POWER_LEVEL_MOD : POWER_LEVEL_USER;
-    await syncRoomMember(room_state, user_id, user_power_level);
-  } else {
-    const alias = `news_${payload.school.id}`;
-    await getRoomByAlias(alias)
-      .then((room) => room.room_id)
-      .then(deleteRoom)
-      .catch(() => {}); // room does not exist
-  }
+async function removeUser(payload) {
+  return deactivateUser(payload.user);
+}
 
-  // Lehrerzimmer
-  if (payload.user.is_school_teacher === true) {
-    const room_name = 'Lehrerzimmer';
-    const topic = `${payload.school.name}`;
-    const alias = `teachers_${payload.school.id}`;
-    const room_state = await syncRoom(alias, room_name, topic, EVENT_DEFAULT_ALL);
-
-    const user_power_level = payload.user.is_school_admin ? POWER_LEVEL_MOD : POWER_LEVEL_USER;
-    await syncRoomMember(room_state, user_id, user_power_level);
-  }
+function getSyncUserMatrixId() {
+  const username = Configuration.get('MATRIX_MESSENGER__SYNC_USER_NAME');
+  const servername = Configuration.get('MATRIX_MESSENGER__SERVERNAME');
+  return `@${username}:${servername}`;
 }
 
 async function setupSyncUser() {
-  const username = Configuration.get('MATRIX_MESSENGER__SYNC_USER_NAME');
-  const servername = Configuration.get('MATRIX_MESSENGER__SERVERNAME');
-  const matrixId = `@${username}:${servername}`;
+  const matrixId = getSyncUserMatrixId();
   console.log(`setupSyncUser ${matrixId}`);
 
   // set avatar
   const currentAvatar = await getProfile(matrixId, 'avatar_url');
   console.log(`${matrixId} avatar: ${currentAvatar}`);
   if (!currentAvatar) {
-    const content_uri = await uploadFile('avatar.png', './data/avatar.png', 'image/png');
+    const avatar_path = Configuration.get('MATRIX_SYNC_USER_AVATAR_PATH');
+    const content_uri = await uploadFile('avatar.png', avatar_path, 'image/png');
     await setProfile(matrixId, 'avatar_url', content_uri);
   }
 
@@ -114,14 +143,6 @@ async function setupSyncUser() {
 // INTERNAL FUNCTIONS
 function getWelcomeMessage(payload) {
   let welcomeMessage;
-
-  if (payload.user.is_school_admin) {
-    welcomeMessage = Configuration.has('WELCOME_MESSAGE_ADMIN') ? Configuration.get('WELCOME_MESSAGE_ADMIN') : null;
-  } else if (payload.user.is_school_teacher) {
-    welcomeMessage = Configuration.has('WELCOME_MESSAGE_TEACHER') ? Configuration.get('WELCOME_MESSAGE_TEACHER') : null;
-  } else {
-    welcomeMessage = Configuration.has('WELCOME_MESSAGE_STUDENT') ? Configuration.get('WELCOME_MESSAGE_STUDENT') : null;
-  }
 
   if (payload.welcome && payload.welcome.text) {
     welcomeMessage = payload.welcome.text;
@@ -146,9 +167,12 @@ async function sendMessage(room_id, message) {
 async function deactivateUser(user) {
   return matrix_admin_api
     .post(`/_synapse/admin/v1/deactivate/${user.id}`, { erase: true })
-    .then(console.log)
-    .catch(console.error);
+    .then(() => {
+      console.log(`User ${user.id} deactivated.`);
+    })
+    .catch(logRequestError);
 }
+
 async function getOrCreateUser(user) {
   // check if user exists
   // Docu: https://github.com/matrix-org/synapse/blob/master/docs/admin_api/user_admin_api.rst#query-account
@@ -174,7 +198,7 @@ async function getOrCreateUser(user) {
 async function createUser(user) {
   // Docu: https://github.com/matrix-org/synapse/blob/master/docs/admin_api/user_admin_api.rst#create-or-modify-account
   const newUser = {
-    password: Math.random().toString(36), // we will never use this, password login should be disabled
+    password: user.password || Math.random().toString(36), // random password if login via password is not used
     displayname: user.name,
     threepids: [],
     admin: false,
@@ -267,7 +291,13 @@ async function syncDirectRoom(alias, name, topic, user_ids) {
   return room_id;
 }
 
-async function syncRoom(alias, name, topic, events_default) {
+async function syncRoom(room) {
+  const { name } = room;
+  const type = room.type || 'room';
+  const alias = `${type}_${room.id}`;
+  const topic = room.description || '';
+  const events_default = room.bidirectional ? EVENT_DEFAULT_ALL : EVENT_DEFAULT_MOD_ONLY;
+
   const room_id = await getOrCreateRoom(alias, name, topic);
   const room_state = await getRoomState(room_id);
 
@@ -320,7 +350,7 @@ async function getOrCreateRoom(alias, name, topic) {
     .then((room) => room.room_id)
     .catch(() => createRoom(alias, name, topic)
       .catch((err) => {
-        if (err.response.status === 400) {
+        if (err.response && err.response.status === 400) {
           // room was created already, try to access it again
           return getOrCreateRoom(alias, name, topic);
         }
@@ -351,7 +381,7 @@ async function createRoom(alias, name, topic) {
     creation_content: {
       'm.federate': false,
     },
-    initial_state: [{type: 'm.room.guest_access', state_key: '', content: {guest_access: 'forbidden'}}],
+    initial_state: [{ type: 'm.room.guest_access', state_key: '', content: { guest_access: 'forbidden' } }],
   };
 
   return matrix_admin_api
@@ -371,7 +401,7 @@ async function createDirectRoom(alias, name, topic, user_ids) {
     creation_content: {
       'm.federate': false,
     },
-    initial_state: [{type: 'm.room.guest_access', state_key: '', content: {guest_access: 'forbidden'}}],
+    initial_state: [{ type: 'm.room.guest_access', state_key: '', content: { guest_access: 'forbidden' } }],
   };
 
   return matrix_admin_api
@@ -408,14 +438,17 @@ async function setRoomState(room_id, state_type, content) {
 }
 
 async function uploadFile(file_name, file_path, content_type) {
+  const stat = fs.statSync(file_path);
+  const stream = fs.createReadStream(file_path);
   const request_config = {
     headers: {
-      'content-type': content_type,
+      'Content-Type': content_type,
+      'Content-Length': stat.size,
     },
   };
 
   return matrix_admin_api
-    .post(`/_matrix/media/r0/upload?filename=${file_name}`, fs.createReadStream(file_path), request_config)
+    .post(`/_matrix/media/r0/upload?filename=${file_name}`, stream, request_config)
     .then((response) => {
       console.log(`File ${file_name} upladed.`);
       return response.data.content_uri;

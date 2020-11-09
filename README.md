@@ -15,9 +15,10 @@ Configure the variables defined in `/config/default.schema.json` in a local `.en
 `cp .env.sample .env` or by specifying them as process environment variables.
 
 The following variables are available (`config/default.schema.json`):
+
 ```json
 {
-  "title": "HPI Schul-Cloud Synapse Synchronization Configuration",
+  "title": "Synapse Synchronization Configuration",
   "type": "object",
   "properties": {
     "MATRIX_MESSENGER": {
@@ -77,28 +78,16 @@ The following variables are available (`config/default.schema.json`):
       "type": "string",
       "default": "matrix_sync_populated",
       "description": "The name of the RabbitMQ channel we listen to"
-    },
-    "WELCOME_MESSAGE_ADMIN": {
-      "type": "string",
-      "description": "Great new admin users with a personal message from the sync bot"
-    },
-    "WELCOME_MESSAGE_TEACHER": {
-      "type": "string",
-      "description": "Great new teacher users with a personal message from the sync bot"
-    },
-    "WELCOME_MESSAGE_STUDENT": {
-      "type": "string",
-      "description": "Great new student users with a personal message from the sync bot"
     }
   }
 }
-``` 
+```
 
-To authenticate the `MATRIX_SYNC_USER_NAME` against the synapse server, different authorization methods can be used.
-By configuring `MATRIX_SYNC_USER_PASSWORD` a simple password login is done.
-Instead the accesstoken `MATRIX_SYNC_USER_TOKEN` can be passed directly (eg. if password login is disabled on the server).
+To authenticate the `MATRIX_MESSENGER__SYNC_USER_NAME` against the synapse server, different authorization methods can be used.
+By configuring `MATRIX_MESSENGER__SYNC_USER_PASSWORD` a simple password login is done.
+Instead the accesstoken `MATRIX_MESSENGER__SYNC_USER_TOKEN` can be passed directly (eg. if password login is disabled on the server).
 If the [Shared Secret Authenticator Module](https://github.com/devture/matrix-synapse-shared-secret-auth) is used
-the corresponding `MATRIX_SECRET` can be used instead.
+the corresponding `MATRIX_MESSENGER__SECRET` can be used instead.
 
 ## Logic
 
@@ -106,41 +95,65 @@ the corresponding `MATRIX_SECRET` can be used instead.
 
 ```json
 {
-    "method": "adduser",
-    "welcome": {
-      "text": "Welcome to messenger"
-    },
-    "school": {
-      "id": "0000d186816abba584714c5f",
-      "has_allhands_channel": true,
-      "name": "Paul-Gerhardt-Gymnasium"
-    },
-    "user": {
-      "id": "@sso_0000d224816abba584714c9c:matrix.server.com",
-      "name": "Marla Mathe",
-      "email": "schueler@schul-cloud.org",
-      "is_school_admin": false,
-      "is_school_teacher": false
-    },
-    "rooms": [
-      {
-        "id": "0000dcfbfb5c7a3f00bf21ab",
-        "name": "Mathe",
-        "description": "Kurs",
-        "type": "course",
-        "bidirectional": false,
-        "is_moderator": false
-      },
-      {
-        "id": "5e1dba1eaa30ab4df47e11d2",
-        "name": "Test Team",
-        "description": "Team",
-        "type": "team",
-        "bidirectional": false,
-        "is_moderator": false
-      }
-    ]
+  "method": "addUser",
+  "welcome": {
+    "text": "(optional, can contain html links and formatting)"
+  },
+  "user": {
+    "id": "@someId:matrix.server.com",
+    "name": "Firstname Lastname",
+    "email": "(optional)",
+    "password": "(optional)"
+  },
+  "rooms": [
+    {
+      "type": "(optional, default: 'room')",
+      "id": "Ab01234",
+      "name": "Room Name",
+      "description": "(optional)",
+      "bidirectional": "(optional, default: false)",
+      "is_moderator": "(optional, default: false)"
+    }
+  ]
+}
+```
+
+```json
+{
+  "method": "removeUser",
+  "user": {
+    "id": "@someId:matrix.server.com",
   }
+}
+```
+
+```json
+{
+  "method": "addRoom",
+  "room": {
+    "type": "(optional, default: 'room')",
+    "id": "Ab01234",
+    "name": "Room Name",
+    "description": "(optional)",
+    "bidirectional": "(optional, default: false)"
+  },
+  "members": [
+    {
+      "id": "@someId:matrix.server.com",
+      "is_moderator": "(optional, default: false)"
+    }
+  ]
+}
+```
+
+```json
+{
+  "method": "removeRoom",
+  "room": {
+    "type": "(optional, default: 'room')",
+    "id": "Ab01234"
+  }
+}
 ```
 
 ### 2. Sync
@@ -152,22 +165,19 @@ the corresponding `MATRIX_SECRET` can be used instead.
 Right now we should not kick out users of rooms they are in, because they can be added to new rooms via the chat interface.
 We also do not lower the users power level in a sync.
 
-
-## Open Questions:
-
-- TODO: Globale Lehrerzimmer: How to ensure invites are not resent to often -> we can not know if user already received invite and declined -> move to dedicated function?
-
 ## Container
 
 ### Build
 
 To build a default container image run the following code:
+
 ```
 make build
 ```
 
 To customize the build process set some environment variables (details see
 Makefile). For example set `DOCKER_IMAGE_TAG` to build a custom image tag:
+
 ```
 make build DOCKER_IMAGE_TAG="foo/bar:latest"
 ```
@@ -175,6 +185,7 @@ make build DOCKER_IMAGE_TAG="foo/bar:latest"
 ### Push
 
 To push a previously built default container image run the following code:
+
 ```
 make push
 ```
@@ -185,6 +196,7 @@ later for CI pipelines.**
 
 To customize the push process set some environment variables (details see
 Makefile). For example set `DOCKER_IMAGE_TAG` to push a custom image tag:
+
 ```
 make push DOCKER_IMAGE_TAG="foo/bar:latest"
 ```

@@ -9,11 +9,12 @@ describe('debug', function desc() {
 
   describe('syncRoom', () => {
     it('full room', async () => {
-      const alias = '$test_id';
-      const topic = 'topic';
-      const name = 'name2';
-
-      const room_state = await syncer.syncRoom(alias, name, topic);
+      const room = {
+        type: '$test',
+        id: 'id',
+        name: 'name2',
+      };
+      const room_state = await syncer.syncRoom(room);
 
       const user_id = '';
       await syncer.syncRoomMember(room_state, user_id, 50);
@@ -24,14 +25,14 @@ describe('debug', function desc() {
 
   it('kickUser', () => syncer.kickUser('', '', ''));
 
-  it('getOrCreateUser', () => syncer.getOrCreateUser({id: '@sso_:test.messenger.schule', name: 'Test Sync'}));
+  it('getOrCreateUser', () => syncer.getOrCreateUser({ id: '@sso_:test.messenger.schule', name: 'Test Sync' }));
 
   it('getUsers', async () => {
     const users = await syncer.getUsers();
     console.log(users);
   });
 
-  it('deactivateUser', () => syncer.deactivateUser({id: '@user:test.messenger.schule'}));
+  it('deactivateUser', () => syncer.deactivateUser({ id: '@user:test.messenger.schule' }));
 
   it('getRooms', async () => {
     const rooms = await syncer.getRooms();
