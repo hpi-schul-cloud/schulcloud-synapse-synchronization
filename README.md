@@ -97,7 +97,7 @@ the corresponding `MATRIX_MESSENGER__SECRET` can be used instead.
 {
   "method": "addUser",
   "welcome": {
-    "text": "Welcome to messenger"
+    "text": "(optional, can contain html links and formatting)"
   },
   "user": {
     "id": "@someId:matrix.server.com",

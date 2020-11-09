@@ -86,7 +86,9 @@ async function syncUserWithMatrix(payload) {
       // send welcome message
       const message = {
         msgtype: 'm.text',
-        body: welcomeMessage,
+        body: stripHtml(welcomeMessage),
+        format: 'org.matrix.custom.html',
+        formatted_body: welcomeMessage,
       };
       await sendMessage(room_id, message);
     }
@@ -100,6 +102,10 @@ async function syncUserWithMatrix(payload) {
       await syncRoomMember(room_state, user_id, user_power_level);
     });
   }
+}
+
+function stripHtml(htmlString) {
+  return htmlString.replace(/(<([^>]+)>)/gi, '');
 }
 
 async function removeUser(payload) {
