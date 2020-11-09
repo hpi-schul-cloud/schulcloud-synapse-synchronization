@@ -7,10 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Allowed Types of change: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`
 
-## Unreleased
+## [Unreleased]
+
+
+## [2.0.0]
+
+### Changed
+
+ - SC-5476 - Rename configuration values to match server 
+ - SC-5900 - Remove hpi-schul-cloud specific logic
 
 ### Added
 
  - OPS-1297 - Added Changelog github action
- - SC-5476 - Rename configuration values to match server 
- - SC-5900 - Remove hpi-schul-cloud specific logic
