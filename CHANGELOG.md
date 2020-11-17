@@ -13,6 +13,10 @@ Allowed Types of change: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `
 
 - Documented how to release the project
 
+### Fixed
+
+- SC-7845 - fixed changelog github action
+
 ## [2.0.0]
 
 ### Changed
