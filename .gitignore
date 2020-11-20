@@ -121,3 +121,4 @@ dist
 # Project
 .env
 .nyc_output
+users.json

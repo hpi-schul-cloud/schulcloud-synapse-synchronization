@@ -4,7 +4,7 @@ const {Configuration} = require('@schul-cloud/commons');
 const syncer = require('../../src/syncer');
 const authToken = require('../../src/authToken');
 
-async function executeRandomizedTests(amount_users = 10, amount_rooms = 5, max_rooms_per_users = 5) {
+async function executeRandomizedTests(amount_users = 10, amount_rooms = 5, rooms_per_users = 5, export_users = false) {
   const school = {
     id: randomString(20),
     has_allhands_channel: true,
@@ -41,9 +41,8 @@ async function executeRandomizedTests(amount_users = 10, amount_rooms = 5, max_r
       user,
       rooms: [],
     };
-    const amount_rooms_for_user = Math.random() * max_rooms_per_users;
 
-    while (msg.rooms.length < amount_rooms_for_user) {
+    while (msg.rooms.length < rooms_per_users) {
       const roomIndex = Math.floor(Math.random() * rooms.length);
       const room = rooms[roomIndex];
       if (msg.rooms.filter((r) => r.id === room.id).length === 0) {
@@ -57,7 +56,9 @@ async function executeRandomizedTests(amount_users = 10, amount_rooms = 5, max_r
   }
 
   // get users with tokens
-  await getUserTokens(users);
+  if (export_users) {
+    await getUserTokens(users);
+  }
 }
 
 function randomString(length) {
@@ -90,7 +91,9 @@ async function getUserTokens(users) {
   return result;
 }
 
-executeRandomizedTests(200, 100, 15)
+const start = new Date();
+executeRandomizedTests(10, 10, 5)
   .then(() => {
-    console.log('DONE');
+    const end = new Date() - start;
+    console.log('Execution time: %dms', end);
   });
