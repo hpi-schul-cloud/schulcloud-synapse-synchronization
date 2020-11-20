@@ -1,4 +1,4 @@
-const { Configuration } = require('@schul-cloud/commons');
+const { Configuration } = require('@hpi-schul-cloud/commons');
 const hmacSHA512 = require('crypto-js/hmac-sha512');
 const axios = require('axios');
 

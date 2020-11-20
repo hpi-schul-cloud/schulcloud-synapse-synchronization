@@ -1,4 +1,4 @@
-const { Configuration } = require('@schul-cloud/commons');
+const { Configuration } = require('@hpi-schul-cloud/commons');
 const amqp = require('amqplib/callback_api');
 const syncer = require('./syncer');
 

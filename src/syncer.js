@@ -1,4 +1,4 @@
-const { Configuration } = require('@schul-cloud/commons');
+const { Configuration } = require('@hpi-schul-cloud/commons');
 const fs = require('fs');
 const matrix_admin_api = require('./matrixApi');
 

@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-const {Configuration} = require('@schul-cloud/commons');
+const {Configuration} = require('@hpi-schul-cloud/commons');
 const syncer = require('../../src/syncer');
 const authToken = require('../../src/authToken');
 

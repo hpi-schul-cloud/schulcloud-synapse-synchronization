@@ -22,7 +22,7 @@
     "coverage": "NODE_ENV=test nyc mocha test/mocha/ --exit --recursive --config=./test/mocha/.mocharc.json"
   },
   "dependencies": {
-    "@schul-cloud/commons": "^1.2.2",
+    "@hpi-schul-cloud/commons": "^1.3.1",
     "amqplib": "^0.6.0",
     "axios": "^0.20.0",
     "crypto-js": "^4.0.0"

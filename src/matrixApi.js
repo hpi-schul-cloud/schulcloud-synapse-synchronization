@@ -1,4 +1,4 @@
-const {Configuration} = require('@schul-cloud/commons');
+const {Configuration} = require('@hpi-schul-cloud/commons');
 const axios = require('axios');
 const authToken = require('./authToken');
 
