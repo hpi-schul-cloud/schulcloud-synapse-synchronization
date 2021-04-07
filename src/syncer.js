@@ -57,7 +57,7 @@ async function syncRoomMemberList(room_state, members) {
   // sync members
   await asyncForEach(members, async (member) => {
     const user_power_level = member.is_moderator ? POWER_LEVEL_MOD : POWER_LEVEL_USER;
-    await syncRoomMember(room_state, member.id, user_power_level);
+    await syncRoomMember(room_state, member.id, member.name, user_power_level);
   });
 }
 
@@ -73,6 +73,7 @@ async function removeRoom(payload) {
 
 async function syncUserWithMatrix(payload) {
   const user_id = payload.user.id;
+  const user_name = payload.user.name;
   const userFoundOrCreated = await getOrCreateUser(payload.user);
 
   if (payload.welcome) {
@@ -99,7 +100,7 @@ async function syncUserWithMatrix(payload) {
       const room_state = await syncRoom(room);
 
       const user_power_level = room.is_moderator ? POWER_LEVEL_MOD : POWER_LEVEL_USER;
-      await syncRoomMember(room_state, user_id, user_power_level);
+      await syncRoomMember(room_state, user_id, user_name, user_power_level);
     });
   }
 }
@@ -199,7 +200,7 @@ async function createUser(user) {
   // Docu: https://github.com/matrix-org/synapse/blob/master/docs/admin_api/user_admin_api.rst#create-or-modify-account
   const newUser = {
     password: user.password || Math.random().toString(36), // random password if login via password is not used
-    displayname: user.name,
+    displayname: user.name || 'New User',
     threepids: [],
     admin: false,
     deactivated: false,
@@ -220,11 +221,26 @@ async function createUser(user) {
     .catch(logRequestError);
 }
 
-async function syncRoomMember(room_state, user_id, user_power_level) {
+async function syncRoomMember(room_state, user_id, user_name, user_power_level) {
   // is member?
   const state_member = room_state.find((state) => (state.type === 'm.room.member' && state.user_id === user_id));
   if (!state_member || state_member.content.membership === 'leave') {
-    await inviteUserToRoom(user_id, room_state[0].room_id);
+    try {
+      await inviteUserToRoom(user_id, room_state[0].room_id);
+    } catch (err) {
+      if (err.response && err.response.status === 404) {
+        console.log(`Create missing user ${user_id}.`);
+        // create user
+        await createUser({
+          id: user_id,
+          name: user_name,
+        });
+        // retry
+        await inviteUserToRoom(user_id, room_state[0].room_id);
+      }
+      throw err;
+    }
+
     await joinUserToRoom(user_id, room_state[0].room_id);
   }
 
@@ -242,8 +258,7 @@ async function inviteUserToRoom(user_id, room_id) {
     })
     .then(() => {
       console.log(`user ${user_id} invited ${room_id}`);
-    })
-    .catch(logRequestError);
+    });
 }
 
 async function joinUserToRoom(user_id, room_id) {
@@ -253,8 +268,7 @@ async function joinUserToRoom(user_id, room_id) {
     })
     .then(() => {
       console.log(`user ${user_id} joined ${room_id}`);
-    })
-    .catch(logRequestError);
+    });
 }
 
 function getUserPowerLevel(room_state, user_id) {
@@ -552,11 +566,15 @@ async function pruneRoom(room_id) {
 
 // HELPER FUNCTIONS
 async function asyncForEach(array, callback) {
-  const promises = [];
-  for (let index = 0; index < array.length; index += 1) {
-    promises.push(callback(array[index], index, array));
+  const promises = array.map(callback);
+  const results = await Promise.allSettled(promises);
+  const failed = results.filter((result) => result.status === 'rejected');
+
+  if (failed.length) {
+    throw failed;
+  } else {
+    return results;
   }
-  return Promise.all(promises);
 }
 
 function logRequestError(error) {

@@ -140,6 +140,7 @@ the corresponding `MATRIX_MESSENGER__SECRET` can be used instead.
   "members": [
     {
       "id": "@someId:matrix.server.com",
+      "name": "User Name",
       "is_moderator": "(optional, default: false)"
     }
   ]
