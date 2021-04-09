@@ -38,6 +38,7 @@ function listen() {
       // ensure queues exist
       channel.assertQueue(RABBIT_MQ_QUEUE, {
         durable: false,
+        arguments: {'x-max-priority': 2},
       });
       channel.assertQueue(RABBIT_MQ_QUEUE_DEAD_LETTER, {
         durable: false,
@@ -70,7 +71,7 @@ function listen() {
 async function onMessage(msg) {
   messageNumber += 1;
   const number = messageNumber;
-  console.log(' [%i] Received %s', number, msg.content.toString());
+  console.log(' [%i] Received msg with priority %s: %s', number, msg.properties.priority, msg.content.toString());
   const message = JSON.parse(msg.content);
 
   switch (message.method.toLowerCase()) {
