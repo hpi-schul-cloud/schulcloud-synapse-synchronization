@@ -9,13 +9,17 @@ Allowed Types of change: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `
 
 ## [Unreleased]
 
+## [2.1.0]
+
 ### Added
 
 - Documented how to release the project
+- SC-8873 - priority queue
 
 ### Fixed
 
 - SC-7845 - fixed changelog github action
+- SC-8873 - recover when invited user was not yet created
 
 ## [2.0.0]
 
