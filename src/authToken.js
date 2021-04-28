@@ -27,6 +27,8 @@ function obtainAccessToken(userId, homeserverApiUri, password) {
     type: 'm.login.password',
     user: userId,
     password,
+    initial_device_display_name: 'sync-display-name',
+    device_id: 'sync-device-id',
   };
 
   return axios.post(loginApiUrl, payload)
