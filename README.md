@@ -1,4 +1,4 @@
-# HPI Schul-Cloud Synapse Synchronization
+# Schul-Cloud Verbund Synapse Synchronization
 
 This is for handling an incoming object that describes a user, his desired channel
 and permissions and then takes care of syncing this to the defined synapse server.
@@ -166,80 +166,4 @@ the corresponding `MATRIX_MESSENGER__SECRET` can be used instead.
 Right now we should not kick out users of rooms they are in, because they can be added to new rooms via the chat interface.
 We also do not lower the users power level in a sync.
 
-## Container
 
-### Build
-
-To build a default container image run the following code:
-
-```
-make build
-```
-
-To customize the build process set some environment variables (details see
-Makefile). For example set `DOCKER_IMAGE_TAG` to build a custom image tag:
-
-```
-make build DOCKER_IMAGE_TAG="foo/bar:latest"
-```
-
-### Push
-
-To push a previously built default container image run the following code:
-
-```
-make push
-```
-
-**Todo: Currently private credentials (username, password) will be used for
-`docker login` (see `~/.docker/config.json`). This should be made configurable
-later for CI pipelines.**
-
-To customize the push process set some environment variables (details see
-Makefile). For example set `DOCKER_IMAGE_TAG` to push a custom image tag:
-
-```
-make push DOCKER_IMAGE_TAG="foo/bar:latest"
-```
-
-## Release
-
-To release this project first [choose the next version number](https://semver.org/), it will be in the formatt `X.Y.Z`.
-In the following replace X.Y.Z with the version you chose.
-
-1. Create a new Release branch
-    ```
-    git checkout -b release/X.Y.Z
-    ```
-
-1. Add a headline (`## [X.Y.Z]`) for the new version in the Changelog below the Unreleased headline
-
-1. Update the version in both `package.json` and `package-lock.json`
-
-1. Commit your changes
-    ```
-    git commit -am 'bump version to X.Y.Z'
-    ```
-
-1. Tag the new version
-    ```
-    git tag -a X.Y.Z
-    ```
-
-1. Merge the release
-    ```
-    git checkout master
-    git merge release/2.0.0
-    git checkout develop
-    git merge master
-    ```
-
-1. Cleanup
-    ```
-    git branch -d release/2.0.0
-    ```
-
-1. Push your changes
-    ```
-    git push origin master develop --tags
-    ```

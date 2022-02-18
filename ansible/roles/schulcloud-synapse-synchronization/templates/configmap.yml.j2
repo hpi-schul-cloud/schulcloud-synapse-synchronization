@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: messenger-sync-configmap
+  namespace: {{ NAMESPACE }}
+  labels:
+    app: messenger-sync
+data:
+  # general
+  NODE_ENV: "production"
+  MATRIX_MESSENGER__URI: "{{ MATRIX_MESSENGER__URI }}"
+  MATRIX_MESSENGER__SERVERNAME: "{{ MATRIX_MESSENGER__SERVERNAME }}"
+  MATRIX_MESSENGER__SYNC_USER_DISPLAYNAME: {{ MATRIX_MESSENGER__SYNC_USER_DISPLAYNAME }}
+  RABBITMQ_MATRIX_QUEUE_EXTERNAL : {{RABBITMQ_MATRIX_QUEUE_EXTERNAL}}
