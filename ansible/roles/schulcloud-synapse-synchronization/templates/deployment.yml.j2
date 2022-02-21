@@ -39,8 +39,8 @@ spec:
             name: messenger-sync-secret
         resources:
           limits:
-            cpu: {{ MESSENGER_SYNC_CPU_LIMITS|default("1000m", true) }}
-            memory: {{ MESSENGER_SYNC_MEMORY_LIMITS|default("1Gi", true) }}
+            cpu: {{ MESSENGER_SYNC_CPU_MAX|default("1000m", true) }}
+            memory: {{ MESSENGER_SYNC_MEMORY_MAX|default("1Gi", true) }}
           requests:
-            cpu: {{ MESSENGER_SYNC_CPU_REQUESTS|default("100m", true) }}
-            memory: {{ MESSENGER_SYNC_MEMORY_REQUESTS|default("128Mi", true) }}
+            cpu: {{ MESSENGER_SYNC_CPU_MIN|default("100m", true) }}
+            memory: {{ MESSENGER_SYNC_MEMORY_MIN|default("128Mi", true) }}
