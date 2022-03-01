@@ -119,6 +119,7 @@ dist
 # IDE
 .idea
 *.iml
+.vscode
 
 # Project
 .env
