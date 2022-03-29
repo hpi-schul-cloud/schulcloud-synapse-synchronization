@@ -1,7 +1,7 @@
 {
   "name": "schulcloud-synapse-synchronization",
   "description": "Synchronizes Schul-Cloud users, classes and team with a matrix based synapse messaging server",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "homepage": "https://schul-cloud.org",
   "main": "src/",
   "license": "AGPL-3.0",
