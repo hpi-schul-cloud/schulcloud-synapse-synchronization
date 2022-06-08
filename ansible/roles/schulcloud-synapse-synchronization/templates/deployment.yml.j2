@@ -6,7 +6,7 @@ metadata:
   labels:
     app: messenger-sync
 spec:
-  replicas: {{ MESSENGER_SYNC_REPLICAS|default("1", true) }}
+  replicas: {{ SCHULCLOUD_SYNAPSE_SYNCHRONIZATION_REPLICAS|default("1", true) }}
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -30,7 +30,7 @@ spec:
         runAsNonRoot: true
       containers:
       - name: messenger-sync
-        image: {{ MESSENGER_SYNC_IMAGE_NAME }}:{{ MESSENGER_SYNC_IMAGE_TAG }}
+        image: {{ SCHULCLOUD_SYNAPSE_SYNCHRONIZATION_IMAGE_NAME }}:{{ SCHULCLOUD_SYNAPSE_SYNCHRONIZATION_IMAGE_TAG }}
         imagePullPolicy: IfNotPresent
         envFrom:
         - configMapRef:
@@ -39,8 +39,8 @@ spec:
             name: messenger-sync-secret
         resources:
           limits:
-            cpu: {{ MESSENGER_SYNC_CPU_MAX|default("1000m", true) }}
-            memory: {{ MESSENGER_SYNC_MEMORY_MAX|default("1Gi", true) }}
+            cpu: {{ SCHULCLOUD_SYNAPSE_SYNCHRONIZATION_CPU_MAX|default("1000m", true) }}
+            memory: {{ SCHULCLOUD_SYNAPSE_SYNCHRONIZATION_MEMORY_MAX|default("1Gi", true) }}
           requests:
-            cpu: {{ MESSENGER_SYNC_CPU_MIN|default("100m", true) }}
-            memory: {{ MESSENGER_SYNC_MEMORY_MIN|default("128Mi", true) }}
+            cpu: {{ SCHULCLOUD_SYNAPSE_SYNCHRONIZATION_CPU_MIN|default("100m", true) }}
+            memory: {{ SCHULCLOUD_SYNAPSE_SYNCHRONIZATION_MEMORY_MIN|default("128Mi", true) }}
