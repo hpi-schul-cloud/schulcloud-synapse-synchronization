@@ -1,39 +1,29 @@
   - name: Configmap
     kubernetes.core.k8s:
-      kubeconfig: ~/.kube/config 
+      kubeconfig: ~/.kube/config
       namespace: "{{ NAMESPACE }}"
       template: configmap.yml.j2
       apply: yes
     when: WITH_MESSENGER_SYNC
-      
+
   - name: remove Configmap
     kubernetes.core.k8s:
-      kubeconfig: ~/.kube/config 
+      kubeconfig: ~/.kube/config
       state: absent
       api_version: v1
       kind: ConfigMap
       namespace: "{{ NAMESPACE }}"
       name: messenger-sync-configmap
     when: not WITH_MESSENGER_SYNC
-      
-  - name: remove Secret
+
+  - name: Add or Update Secret by 1Password
     kubernetes.core.k8s:
       kubeconfig: ~/.kube/config
-      state: absent
-      api_version: v1
-      kind: Secret
-      namespace: "{{ NAMESPACE }}"
-      name: messenger-sync-secret
-    when: not WITH_MESSENGER_SYNC and ( ONEPASSWORD_OPERATOR is undefined or ( ONEPASSWORD_OPERATOR is defined and not ONEPASSWORD_OPERATOR ) )
-      
-  - name: Add or Update Secred by 1Password
-    kubernetes.core.k8s:
-      kubeconfig: ~/.kube/config 
       namespace: "{{ NAMESPACE }}"
       template: onepassword.yml.j2
     when: WITH_MESSENGER_SYNC and ONEPASSWORD_OPERATOR is defined and ONEPASSWORD_OPERATOR|bool
-      
-  - name: remove Secred by 1Password
+
+  - name: remove Secret by 1Password
     kubernetes.core.k8s:
       kubeconfig: ~/.kube/config
       state: absent
@@ -42,14 +32,14 @@
       namespace: "{{ NAMESPACE }}"
       name: messenger-sync-secret
     when: not WITH_MESSENGER_SYNC and ONEPASSWORD_OPERATOR is defined and ONEPASSWORD_OPERATOR|bool
-      
+
   - name: Add or Update Deployment
     kubernetes.core.k8s:
-      kubeconfig: ~/.kube/config 
+      kubeconfig: ~/.kube/config
       namespace: "{{ NAMESPACE }}"
       template: deployment.yml.j2
-    when: WITH_MESSENGER_SYNC 
-      
+    when: WITH_MESSENGER_SYNC
+
   - name: remove Deployment
     kubernetes.core.k8s:
       kubeconfig: ~/.kube/config
